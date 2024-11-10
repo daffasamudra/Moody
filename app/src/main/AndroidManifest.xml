@@ -13,7 +13,7 @@
         android:theme="@style/Theme.Moody"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name="id.dev.moody.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.Moody">

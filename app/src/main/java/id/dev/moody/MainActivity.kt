@@ -20,11 +20,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import id.dev.moody.ui.SongRecommendationScreen
 import id.dev.moody.ui.theme.MoodyTheme
 import id.dev.novlityapp.R
+import id.dev.moody.database.Song
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
@@ -33,52 +37,58 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MoodyTheme {
-                Scaffold(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    topBar = {
-                        TopAppBar(
-                            title = { Text("Mood Tracker", fontWeight = FontWeight.Bold) },
-                            actions = {
-                                Icon(
-                                    imageVector = Icons.Default.Favorite,
-                                    contentDescription = "Mood Icon",
-                                    tint = Color.Gray
-                                )
-                            },
-                            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF6200EE))
+                val navController = rememberNavController()
+                NavHost(navController = navController, startDestination = "moodTracker") {
+                    composable("moodTracker") {
+                        MoodTrackerApp(
+                            onExploreSongsClick = { selectedMood ->
+                                navController.navigate("songRecommendation/$selectedMood")
+                            }
                         )
                     }
-                ) { innerPadding ->
-                    MoodTrackerApp(modifier = Modifier.padding(innerPadding))
+                    composable("songRecommendation/{mood}") { backStackEntry ->
+                        val mood = backStackEntry.arguments?.getString("mood") ?: "Bahagia"
+                        val songs = getSongsForMood(mood)
+                        SongRecommendationScreen(
+                            selectedMood = mood,
+                            songs = songs,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
                 }
             }
+        }
+    }
+
+    // Fungsi untuk mendapatkan daftar lagu berdasarkan mood
+    private fun getSongsForMood(mood: String): List<Song> {
+        return when (mood) {
+            "Bahagia" -> listOf(
+                Song("Happy Song", "Artist A", "Bahagia", R.raw.happy_song)
+            )
+            else -> emptyList()
         }
     }
 }
 
 @Composable
-fun MoodTrackerApp(modifier: Modifier = Modifier) {
+fun MoodTrackerApp(modifier: Modifier = Modifier, onExploreSongsClick: (String) -> Unit) {
     var selectedMood by remember { mutableStateOf("Bahagia") }
     var notes by remember { mutableStateOf("") }
     var savedNotes by remember { mutableStateOf("") }
-    val moods = listOf("Bahagia", "Sedih", "Bersemangat", "Santai", "Stres")
+    val moods = listOf("Bahagia", "Sedih", "Bersemangat", "Santai", "Stress")
 
-    // Menggunakan Box untuk menumpuk Image sebagai latar belakang
     Box(
         modifier = modifier.fillMaxSize()
     ) {
-        // Image untuk latar belakang
         Image(
             painter = painterResource(id = R.drawable.retro),
             contentDescription = "Background Image",
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
             alpha = 0.50f
         )
 
-        // Konten aplikasi di dalam Column
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -89,7 +99,6 @@ fun MoodTrackerApp(modifier: Modifier = Modifier) {
                     .fillMaxWidth()
                     .padding(8.dp),
                 shape = RoundedCornerShape(12.dp),
-                elevation = CardDefaults.cardElevation(4.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.7f))
             ) {
                 @OptIn(ExperimentalMaterial3Api::class)
@@ -101,8 +110,6 @@ fun MoodTrackerApp(modifier: Modifier = Modifier) {
                         .fillMaxWidth()
                         .height(150.dp)
                         .padding(8.dp),
-                    maxLines = 5,
-                    singleLine = false,
                     colors = TextFieldDefaults.textFieldColors(
                         containerColor = Color.Transparent,
                         focusedIndicatorColor = Color(0xFF9C27B0),
@@ -132,28 +139,24 @@ fun MoodTrackerApp(modifier: Modifier = Modifier) {
                 )
             }
 
-            // Card untuk RadioButton dan judul
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(8.dp),
                 shape = RoundedCornerShape(12.dp),
-                elevation = CardDefaults.cardElevation(4.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.7f))
             ) {
                 Column(modifier = Modifier.padding(8.dp)) {
-                    // Teks judul di dalam Card
                     Text(
                         "Bagaimana Perasaanmu Hari Ini?",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF9C27B0) // Warna teks putih
+                            color = Color(0xFF9C27B0)
                         ),
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
-                    // Daftar RadioButton
                     moods.forEach { mood ->
                         Row(
                             modifier = Modifier
@@ -164,11 +167,7 @@ fun MoodTrackerApp(modifier: Modifier = Modifier) {
                             Box(
                                 modifier = Modifier
                                     .size(24.dp)
-                                    .border( // Border pada RadioButton
-                                        width = 1.dp,
-                                        color = Color.Gray.copy(alpha = 0.6f),
-                                        shape = RoundedCornerShape(4.dp)
-                                    )
+                                    .border(1.dp, Color.Gray.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
                                     .background(
                                         color = if (mood == selectedMood) Color(0xFF9C27B0) else Color.Transparent,
                                         shape = RoundedCornerShape(4.dp)
@@ -179,7 +178,7 @@ fun MoodTrackerApp(modifier: Modifier = Modifier) {
                             Text(
                                 text = mood,
                                 style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp),
-                                color = if (mood == selectedMood) Color(0xFF9C27B0) else Color(0xFF9C27B0)
+                                color = Color(0xFF9C27B0)
                             )
                         }
                     }
@@ -189,7 +188,7 @@ fun MoodTrackerApp(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = { /* Simpan mood dan catatan, lalu tampilkan lagu */ },
+                onClick = { onExploreSongsClick(selectedMood) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(8.dp),
@@ -198,13 +197,5 @@ fun MoodTrackerApp(modifier: Modifier = Modifier) {
                 Text("Eksplor Lagu", color = Color.White)
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MoodTrackerAppPreview() {
-    MoodyTheme {
-        MoodTrackerApp()
     }
 }
