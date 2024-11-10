@@ -12,17 +12,25 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Moody"
         tools:targetApi="31">
+
+        <!-- SplashScreenActivity sebagai launcher -->
+        <activity
+            android:name="id.dev.moody.ui.SplashScreenActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Moody">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- MainActivity sebagai aktivitas utama -->
         <activity
             android:name="id.dev.moody.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.Moody">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+            android:theme="@style/Theme.Moody" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
     </application>
 
 </manifest>

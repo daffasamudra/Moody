@@ -82,11 +82,11 @@ fun MoodTrackerApp(modifier: Modifier = Modifier, onExploreSongsClick: (String) 
         modifier = modifier.fillMaxSize()
     ) {
         Image(
-            painter = painterResource(id = R.drawable.retro),
+            painter = painterResource(id = R.drawable.inputbgr),
             contentDescription = "Background Image",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
-            alpha = 0.50f
+            alpha = 0.80f
         )
 
         Column(
@@ -94,6 +94,9 @@ fun MoodTrackerApp(modifier: Modifier = Modifier, onExploreSongsClick: (String) 
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
+
+            Spacer(modifier = Modifier.height(100.dp))
+
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -112,7 +115,7 @@ fun MoodTrackerApp(modifier: Modifier = Modifier, onExploreSongsClick: (String) 
                         .padding(8.dp),
                     colors = TextFieldDefaults.textFieldColors(
                         containerColor = Color.Transparent,
-                        focusedIndicatorColor = Color(0xFF9C27B0),
+                        focusedIndicatorColor = Color(0xFF000000),
                         unfocusedIndicatorColor = Color.LightGray
                     )
                 )
@@ -123,7 +126,7 @@ fun MoodTrackerApp(modifier: Modifier = Modifier, onExploreSongsClick: (String) 
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9C27B0))
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF000000))
             ) {
                 Text("Simpan Catatan", color = Color.White)
             }
@@ -152,7 +155,7 @@ fun MoodTrackerApp(modifier: Modifier = Modifier, onExploreSongsClick: (String) 
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF9C27B0)
+                            color = Color(0xFF000000)
                         ),
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
@@ -169,7 +172,7 @@ fun MoodTrackerApp(modifier: Modifier = Modifier, onExploreSongsClick: (String) 
                                     .size(24.dp)
                                     .border(1.dp, Color.Gray.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
                                     .background(
-                                        color = if (mood == selectedMood) Color(0xFF9C27B0) else Color.Transparent,
+                                        color = if (mood == selectedMood) Color(0xFF000000) else Color.Transparent,
                                         shape = RoundedCornerShape(4.dp)
                                     )
                                     .clickable { selectedMood = mood }
@@ -178,7 +181,7 @@ fun MoodTrackerApp(modifier: Modifier = Modifier, onExploreSongsClick: (String) 
                             Text(
                                 text = mood,
                                 style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp),
-                                color = Color(0xFF9C27B0)
+                                color = Color(0xFF000000)
                             )
                         }
                     }
@@ -192,7 +195,7 @@ fun MoodTrackerApp(modifier: Modifier = Modifier, onExploreSongsClick: (String) 
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9C27B0))
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF000000))
             ) {
                 Text("Eksplor Lagu", color = Color.White)
             }
