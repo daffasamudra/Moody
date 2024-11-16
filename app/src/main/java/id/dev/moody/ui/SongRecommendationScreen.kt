@@ -3,7 +3,6 @@ package id.dev.moody.ui
 import android.content.Context
 import android.media.MediaPlayer
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,18 +19,24 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import id.dev.moody.database.Song
 import id.dev.novlityapp.R
-import kotlinx.coroutines.launch
 
+// Impor BottomNavigationBar dari BottomNavigationBar.kt
+import id.dev.moody.ui.BottomNavigationBar
+import id.dev.moody.ui.theme.White
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SongRecommendationScreen(
+    navController: NavController,
     selectedMood: String,
     onBack: () -> Unit,
     mediaPlayer: MediaPlayer = MediaPlayer(),
@@ -48,97 +53,108 @@ fun SongRecommendationScreen(
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Rekomendasi Lagu - $selectedMood") },
                 navigationIcon = {
                     IconButton(onClick = {
-                        mediaPlayer.stop() // Hentikan pemutaran saat kembali
+                        mediaPlayer.stop()
                         onBack()
                     }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
+        },
+        bottomBar = {
+            BottomNavigationBar(navController) // Memanggil BottomNavigationBar dari BottomNavigationBar.kt
         }
     ) { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(Color.LightGray)
-                .padding(16.dp)
         ) {
-            // Gambar mood di bagian atas
+            // Background wallpaper dari MainActivity
             Image(
-                painter = painterResource(id = R.drawable.retro),
-                contentDescription = "Gambar Mood",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp)
-                    .background(Color.Gray)
-                    .padding(8.dp)
+                painter = painterResource(id = R.drawable.bgrhappy), // Background wallpaper yang sama dengan MainActivity
+                contentDescription = "Background Wallpaper",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Teks "Quotes" di bawah gambar
-            Text(
-                text = "Quotes",
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
-                ),
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Pemutar musik sederhana
-            Card(
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp)
-                    .padding(8.dp),
-                shape = RoundedCornerShape(12.dp)
+                    .fillMaxSize()
+                    .padding(16.dp)
             ) {
-                Row(
+                Image(
+                    painter = painterResource(id = R.drawable.fotohappy), // Gambar khusus untuk mood happy
+                    contentDescription = "Gambar Mood Happy",
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .padding(8.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Even the darkest night will end and the sun will rise.",
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        color = Color.Black
+                    ),
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(80.dp)
                         .padding(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceAround
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEB3B))
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.retro),
-                        contentDescription = "Album Art",
-                        modifier = Modifier.size(50.dp)
-                    )
-                    IconButton(onClick = { /* Placeholder untuk lagu sebelumnya */ }) {
-                        Icon(Icons.Rounded.SkipPrevious, contentDescription = "Previous")
-                    }
-                    IconButton(onClick = { playOrPauseSong(context, mediaPlayer, currentSong) { isPlaying = it } }) {
-                        Icon(
-                            imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = if (isPlaying) "Pause" else "Play"
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceAround
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.iconhappy), // Gambar album art happy
+                            contentDescription = "Album Art Happy",
+                            modifier = Modifier.size(50.dp)
                         )
-                    }
-                    IconButton(onClick = { /* Placeholder untuk lagu berikutnya */ }) {
-                        Icon(Icons.Rounded.SkipNext, contentDescription = "Next")
+                        IconButton(onClick = { /* Placeholder untuk lagu sebelumnya */ }) {
+                            Icon(Icons.Rounded.SkipPrevious, contentDescription = "Previous", tint = Color.White)
+                        }
+                        IconButton(onClick = { playOrPauseSong(context, mediaPlayer, currentSong) { isPlaying = it } }) {
+                            Icon(
+                                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                contentDescription = if (isPlaying) "Pause" else "Play", tint = Color.White
+                            )
+                        }
+                        IconButton(onClick = { /* Placeholder untuk lagu berikutnya */ }) {
+                            Icon(Icons.Rounded.SkipNext, contentDescription = "Next", tint = Color.White)
+                        }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            // Daftar lagu di bawahnya
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                itemsIndexed(songs) { index, song ->
-                    SongListItem(index + 1, song) {
-                        currentSong = song
-                        playOrPauseSong(context, mediaPlayer, song) { isPlaying = it }
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    itemsIndexed(songs) { index, song ->
+                        SongListItemHappy(index + 1, song, Color(0xFFFFEB3B)) {
+                            currentSong = song
+                            playOrPauseSong(context, mediaPlayer, song) { isPlaying = it }
+                        }
                     }
                 }
             }
@@ -147,14 +163,14 @@ fun SongRecommendationScreen(
 }
 
 @Composable
-fun SongListItem(index: Int, song: Song, onPlayClick: () -> Unit) {
+fun SongListItemHappy(index: Int, song: Song, backgroundColor: Color, onPlayClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .clickable { onPlayClick() },
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFE0E0E0))
+        colors = CardDefaults.cardColors(containerColor = backgroundColor)
     ) {
         Row(
             modifier = Modifier
@@ -164,16 +180,24 @@ fun SongListItem(index: Int, song: Song, onPlayClick: () -> Unit) {
         ) {
             Text(
                 text = "$index.",
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyLarge.copy(color = Color.White), // Warna teks nomor menjadi putih
                 modifier = Modifier.padding(end = 16.dp)
             )
             Column {
-                Text(text = song.title, fontWeight = FontWeight.Bold)
-                Text(text = "By ${song.artist}", style = MaterialTheme.typography.bodySmall)
+                Text(
+                    text = song.title,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White // Warna teks judul lagu menjadi putih
+                )
+                Text(
+                    text = "By ${song.artist}",
+                    style = MaterialTheme.typography.bodySmall.copy(color = Color.White) // Warna teks artis menjadi putih
+                )
             }
         }
     }
 }
+
 
 fun playOrPauseSong(
     context: Context,
@@ -200,14 +224,4 @@ fun playOrPauseSong(
     mediaPlayer.setOnCompletionListener {
         onPlaybackChange(false) // Reset icon to Play when song finishes
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun SongRecommendationScreenPreview() {
-    val dummySongs = listOf(
-        Song(title = "Happy Song", artist = "Artist A", mood = "Bahagia", filePath = R.raw.happy_song)
-    )
-
-    SongRecommendationScreen(selectedMood = "Bahagia", onBack = {}, songs = dummySongs)
 }

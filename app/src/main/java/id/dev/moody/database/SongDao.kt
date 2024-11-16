@@ -7,7 +7,7 @@ import androidx.room.Query
 @Dao
 interface SongDao {
     @Insert
-    suspend fun insertSong(song: Song)
+    suspend fun insertSongs(songs: List<Song>)
 
     @Query("SELECT * FROM songs WHERE mood = :mood")
     suspend fun getSongsByMood(mood: String): List<Song>

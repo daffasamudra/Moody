@@ -10,8 +10,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,13 +20,19 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import id.dev.moody.ui.SongRecommendationScreen
+import id.dev.moody.ui.SongRecommendationScreenSad
 import id.dev.moody.ui.theme.MoodyTheme
 import id.dev.novlityapp.R
 import id.dev.moody.database.Song
+import id.dev.moody.ui.SongRecommendationScreenRelax
+import id.dev.moody.ui.SongRecommendationScreenSpirit
+import id.dev.moody.ui.SongRecommendationScreenStress
+import id.dev.moody.ui.BottomNavigationBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
@@ -42,15 +46,54 @@ class MainActivity : ComponentActivity() {
                     composable("moodTracker") {
                         MoodTrackerApp(
                             onExploreSongsClick = { selectedMood ->
-                                navController.navigate("songRecommendation/$selectedMood")
+                                when (selectedMood) {
+                                    "Bahagia" -> navController.navigate("songRecommendationBahagia")
+                                    "Sedih" -> navController.navigate("songRecommendationSad")
+                                    "Santai" -> navController.navigate("songRecommendationSantai")
+                                    "Semangat" -> navController.navigate("songRecommendationSemangat")
+                                    "Stress" -> navController.navigate("songRecommendationStress")
+                                    else -> navController.navigate("songRecommendation/$selectedMood")
+                                }
                             }
                         )
                     }
-                    composable("songRecommendation/{mood}") { backStackEntry ->
-                        val mood = backStackEntry.arguments?.getString("mood") ?: "Bahagia"
-                        val songs = getSongsForMood(mood)
+                    composable("songRecommendationBahagia") {
+                        val songs = getSongsForMood("Bahagia")
                         SongRecommendationScreen(
-                            selectedMood = mood,
+                            navController = navController, // Tambahkan NavController
+                            selectedMood = "Bahagia",
+                            songs = songs,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable("songRecommendationSantai") {
+                        val songs = getSongsForMood("Santai")
+                        SongRecommendationScreenRelax(
+                            navController = navController, // Tambahkan NavController
+                            songs = songs,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable("songRecommendationSemangat") {
+                        val songs = getSongsForMood("Semangat")
+                        SongRecommendationScreenSpirit(
+                            navController = navController, // Tambahkan NavController
+                            songs = songs,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable("songRecommendationStress") {
+                        val songs = getSongsForMood("Stress")
+                        SongRecommendationScreenStress(
+                            navController = navController, // Tambahkan NavController
+                            songs = songs,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable("songRecommendationSad") {
+                        val songs = getSongsForMood("Sedih")
+                        SongRecommendationScreenSad(
+                            navController = navController, // Tambahkan NavController
                             songs = songs,
                             onBack = { navController.popBackStack() }
                         )
@@ -60,23 +103,45 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // Fungsi untuk mendapatkan daftar lagu berdasarkan mood
     private fun getSongsForMood(mood: String): List<Song> {
         return when (mood) {
             "Bahagia" -> listOf(
-                Song("Happy Song", "Artist A", "Bahagia", R.raw.happy_song)
+                Song("Happy Song", "Artist A", "Bahagia", R.raw.happy_song),
+                Song("Joyful Melody", "Artist B", "Bahagia", R.raw.teeth),
+                Song("Uplifting Tune", "Artist C", "Bahagia", R.raw.never)
+            )
+            "Sedih" -> listOf(
+                Song("Sad Song", "Artist D", "Sedih", R.raw.goodbye),
+                Song("Lonely Melody", "Artist E", "Sedih", R.raw.atlantis),
+                Song("Melancholy Tune", "Artist F", "Sedih", R.raw.glimpse)
+            )
+            "Semangat" -> listOf(
+                Song("Energy Booster", "Artist G", "Semangat", R.raw.best),
+                Song("High Spirits", "Artist H", "Semangat", R.raw.best),
+                Song("Powerful Beat", "Artist I", "Semangat", R.raw.best)
+            )
+            "Stress" -> listOf(
+                Song("Calm Waves", "Artist J", "Stress", R.raw.best),
+                Song("Relaxing Breeze", "Artist K", "Stress", R.raw.best),
+                Song("Mindful Moments", "Artist L", "Stress", R.raw.best)
+            )
+            "Santai" -> listOf(
+                Song("Easy Going", "Artist M", "Santai", R.raw.best),
+                Song("Tranquil Tune", "Artist N", "Santai", R.raw.best),
+                Song("Peaceful Melody", "Artist O", "Santai", R.raw.best)
             )
             else -> emptyList()
         }
     }
 }
 
+
 @Composable
 fun MoodTrackerApp(modifier: Modifier = Modifier, onExploreSongsClick: (String) -> Unit) {
     var selectedMood by remember { mutableStateOf("Bahagia") }
     var notes by remember { mutableStateOf("") }
     var savedNotes by remember { mutableStateOf("") }
-    val moods = listOf("Bahagia", "Sedih", "Bersemangat", "Santai", "Stress")
+    val moods = listOf("Bahagia", "Sedih", "Semangat", "Santai", "Stress")
 
     Box(
         modifier = modifier.fillMaxSize()
