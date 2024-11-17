@@ -30,27 +30,39 @@ import id.dev.moody.database.Song
 import id.dev.novlityapp.R
 
 // Impor BottomNavigationBar dari BottomNavigationBar.kt
-import id.dev.moody.ui.BottomNavigationBar
-import id.dev.moody.ui.theme.White
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SongRecommendationScreen(
     navController: NavController,
+    themeViewModel: ThemeViewModel,
     selectedMood: String,
     onBack: () -> Unit,
     mediaPlayer: MediaPlayer = MediaPlayer(),
     songs: List<Song> = emptyList()
 ) {
     val context = LocalContext.current
-    var currentSong by remember { mutableStateOf<Song?>(null) }
+    var currentSongIndex by remember { mutableStateOf(0) } // Menyimpan indeks lagu yang sedang diputar
     var isPlaying by remember { mutableStateOf(false) }
+    val isDarkTheme by themeViewModel.isDarkTheme
 
     // Bersihkan MediaPlayer saat keluar dari layar
     DisposableEffect(Unit) {
         onDispose {
             mediaPlayer.release()
         }
+    }
+
+    // Fungsi untuk melanjutkan ke lagu berikutnya (skip)
+    fun skipSong() {
+        currentSongIndex = (currentSongIndex + 2) % songs.size // Jika lagu terakhir, kembali ke lagu pertama
+        PlayOrPauseSongRelax(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it }
+    }
+
+    // Fungsi untuk kembali ke lagu sebelumnya (previous)
+    fun previousSong() {
+        currentSongIndex = if (currentSongIndex > 0) currentSongIndex - 1 else songs.size - 3 // Jika lagu pertama, kembali ke lagu terakhir
+        PlayOrPauseSongRelax(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it }
     }
 
     Scaffold(
@@ -64,24 +76,30 @@ fun SongRecommendationScreen(
                     }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.mediumTopAppBarColors(
+                    containerColor = if (isDarkTheme) Color.DarkGray else Color.White,
+                    titleContentColor = if (isDarkTheme) Color.White else Color.Black
+                )
             )
         },
         bottomBar = {
-            BottomNavigationBar(navController) // Memanggil BottomNavigationBar dari BottomNavigationBar.kt
-        }
+            BottomNavigationBar(navController = navController, themeViewModel = themeViewModel)
+        },
+        containerColor = if (isDarkTheme) Color.Black else Color.White
     ) { padding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Background wallpaper dari MainActivity
+            // Background wallpaper
             Image(
                 painter = painterResource(id = R.drawable.bgrhappy), // Background wallpaper yang sama dengan MainActivity
                 contentDescription = "Background Wallpaper",
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                alpha = if (isDarkTheme) 0.5f else 1f
             )
 
             Column(
@@ -105,7 +123,7 @@ fun SongRecommendationScreen(
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp,
-                        color = Color.Black
+                        color = if (isDarkTheme) Color.White else Color.Black
                     ),
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
@@ -118,7 +136,9 @@ fun SongRecommendationScreen(
                         .height(80.dp)
                         .padding(8.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEB3B))
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isDarkTheme) Color.Gray else Color(0xFFFFEB3B)
+                    )
                 ) {
                     Row(
                         modifier = Modifier
@@ -132,17 +152,26 @@ fun SongRecommendationScreen(
                             contentDescription = "Album Art Happy",
                             modifier = Modifier.size(50.dp)
                         )
-                        IconButton(onClick = { /* Placeholder untuk lagu sebelumnya */ }) {
-                            Icon(Icons.Rounded.SkipPrevious, contentDescription = "Previous", tint = Color.White)
-                        }
-                        IconButton(onClick = { playOrPauseSong(context, mediaPlayer, currentSong) { isPlaying = it } }) {
+                        IconButton(onClick = { previousSong() }) {
                             Icon(
-                                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                contentDescription = if (isPlaying) "Pause" else "Play", tint = Color.White
+                                Icons.Rounded.SkipPrevious,
+                                contentDescription = "Previous",
+                                tint = if (isDarkTheme) Color.LightGray else Color.White
                             )
                         }
-                        IconButton(onClick = { /* Placeholder untuk lagu berikutnya */ }) {
-                            Icon(Icons.Rounded.SkipNext, contentDescription = "Next", tint = Color.White)
+                        IconButton(onClick = { PlayOrPauseSongRelax(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it } }) {
+                            Icon(
+                                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                contentDescription = if (isPlaying) "Pause" else "Play",
+                                tint = if (isDarkTheme) Color.LightGray else Color.White
+                            )
+                        }
+                        IconButton(onClick = { skipSong() }) {
+                            Icon(
+                                Icons.Rounded.SkipNext,
+                                contentDescription = "Next",
+                                tint = if (isDarkTheme) Color.LightGray else Color.White
+                            )
                         }
                     }
                 }
@@ -151,9 +180,9 @@ fun SongRecommendationScreen(
 
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     itemsIndexed(songs) { index, song ->
-                        SongListItemHappy(index + 1, song, Color(0xFFFFEB3B)) {
-                            currentSong = song
-                            playOrPauseSong(context, mediaPlayer, song) { isPlaying = it }
+                        SongListItemHappy(index + 1, song, if (isDarkTheme) Color.Gray else Color(0xFFFFEB3B)) {
+                            currentSongIndex = index
+                            PlayOrPauseSongRelax(context, mediaPlayer, song) { isPlaying = it }
                         }
                     }
                 }
@@ -180,24 +209,23 @@ fun SongListItemHappy(index: Int, song: Song, backgroundColor: Color, onPlayClic
         ) {
             Text(
                 text = "$index.",
-                style = MaterialTheme.typography.bodyLarge.copy(color = Color.White), // Warna teks nomor menjadi putih
+                style = MaterialTheme.typography.bodyLarge.copy(color = Color.White),
                 modifier = Modifier.padding(end = 16.dp)
             )
             Column {
                 Text(
                     text = song.title,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White // Warna teks judul lagu menjadi putih
+                    color = Color.White
                 )
                 Text(
                     text = "By ${song.artist}",
-                    style = MaterialTheme.typography.bodySmall.copy(color = Color.White) // Warna teks artis menjadi putih
+                    style = MaterialTheme.typography.bodySmall.copy(color = Color.White)
                 )
             }
         }
     }
 }
-
 
 fun playOrPauseSong(
     context: Context,
@@ -225,3 +253,4 @@ fun playOrPauseSong(
         onPlaybackChange(false) // Reset icon to Play when song finishes
     }
 }
+

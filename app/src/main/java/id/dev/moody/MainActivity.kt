@@ -20,6 +20,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -34,6 +35,8 @@ import id.dev.moody.ui.SongRecommendationScreenSpirit
 import id.dev.moody.ui.SongRecommendationScreenStress
 import id.dev.moody.ui.BottomNavigationBar
 import id.dev.moody.ui.NotesScreen
+import id.dev.moody.ui.SettingsScreen
+import id.dev.moody.ui.ThemeViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -44,13 +47,17 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MoodyTheme {
+            val themeViewModel: ThemeViewModel = viewModel()
+            val isDarkTheme by themeViewModel.isDarkTheme
+
+            MoodyTheme(darkTheme = isDarkTheme) {
                 val navController = rememberNavController()
                 val notesList = remember { mutableStateListOf<Pair<String, String>>() }
 
                 NavHost(navController = navController, startDestination = "moodTracker") {
                     composable("moodTracker") {
                         MoodTrackerApp(
+                            themeViewModel = themeViewModel,
                             onExploreSongsClick = { selectedMood ->
                                 when (selectedMood) {
                                     "Bahagia" -> navController.navigate("songRecommendationBahagia")
@@ -70,55 +77,64 @@ class MainActivity : ComponentActivity() {
                             onViewNotesClick = { navController.navigate("notes") }
                         )
                     }
+                    composable("settings") {
+                        SettingsScreen(navController = navController, themeViewModel = themeViewModel)
+                    }
                     composable("notes") {
                         NotesScreen(
                             navController = navController,
                             notesList = notesList,
                             onBack = { navController.popBackStack() },
                             onDeleteNote = { index ->
-                                notesList.removeAt(index) // Hapus catatan dari daftar
-                            }
+                                notesList.removeAt(index)
+                            },
+                            themeViewModel = themeViewModel
                         )
                     }
                     composable("songRecommendationBahagia") {
                         val songs = getSongsForMood("Bahagia")
                         SongRecommendationScreen(
-                            navController = navController, // Tambahkan NavController
+                            navController = navController,
                             selectedMood = "Bahagia",
                             songs = songs,
-                            onBack = { navController.popBackStack() }
+                            onBack = { navController.popBackStack() },
+                            themeViewModel = themeViewModel
                         )
                     }
                     composable("songRecommendationSantai") {
                         val songs = getSongsForMood("Santai")
                         SongRecommendationScreenRelax(
-                            navController = navController, // Tambahkan NavController
+                            navController = navController,
                             songs = songs,
-                            onBack = { navController.popBackStack() }
+                            onBack = { navController.popBackStack() },
+                            themeViewModel = themeViewModel
                         )
                     }
                     composable("songRecommendationSemangat") {
                         val songs = getSongsForMood("Semangat")
                         SongRecommendationScreenSpirit(
-                            navController = navController, // Tambahkan NavController
+                            navController = navController,
                             songs = songs,
-                            onBack = { navController.popBackStack() }
+                            onBack = { navController.popBackStack() },
+                            themeViewModel = themeViewModel
                         )
                     }
                     composable("songRecommendationStress") {
                         val songs = getSongsForMood("Stress")
                         SongRecommendationScreenStress(
-                            navController = navController, // Tambahkan NavController
+                            navController = navController,
                             songs = songs,
-                            onBack = { navController.popBackStack() }
+                            onBack = { navController.popBackStack() },
+                            themeViewModel = themeViewModel
                         )
                     }
                     composable("songRecommendationSad") {
                         val songs = getSongsForMood("Sedih")
                         SongRecommendationScreenSad(
-                            navController = navController, // Tambahkan NavController
+                            navController = navController,
                             songs = songs,
-                            onBack = { navController.popBackStack() }
+                            onBack = { navController.popBackStack() },
+                            themeViewModel = themeViewModel
                         )
                     }
                 }
@@ -159,26 +175,31 @@ class MainActivity : ComponentActivity() {
 }
 
 
+
 @Composable
 fun MoodTrackerApp(
     modifier: Modifier = Modifier,
+    themeViewModel: ThemeViewModel, // Tambahkan parameter ini
     onExploreSongsClick: (String) -> Unit,
     onSaveNote: (String) -> Unit,
     onViewNotesClick: () -> Unit
 ) {
+    val isDarkTheme by themeViewModel.isDarkTheme // Observasi tema dari ViewModel
     var selectedMood by remember { mutableStateOf("Bahagia") }
     var notes by remember { mutableStateOf("") }
     val moods = listOf("Bahagia", "Sedih", "Semangat", "Santai", "Stress")
 
     Box(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
+            .background(if (isDarkTheme) Color.Black else Color.White) // Terapkan tema gelap/terang
     ) {
         Image(
             painter = painterResource(id = R.drawable.inputbgr),
             contentDescription = "Background Image",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
-            alpha = 0.80f
+            alpha = if (isDarkTheme) 0.50f else 0.80f // Sesuaikan transparansi berdasarkan tema
         )
 
         Column(
@@ -194,7 +215,7 @@ fun MoodTrackerApp(
                     .fillMaxWidth()
                     .padding(8.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.7f))
+                colors = CardDefaults.cardColors(containerColor = if (isDarkTheme) Color.DarkGray else Color.White.copy(alpha = 0.7f))
             ) {
                 @OptIn(ExperimentalMaterial3Api::class)
                 TextField(
@@ -205,14 +226,16 @@ fun MoodTrackerApp(
                         .fillMaxWidth()
                         .height(150.dp)
                         .padding(8.dp),
+                    textStyle = LocalTextStyle.current.copy(
+                        color = if (isDarkTheme) Color.White else Color.Black // Sesuaikan warna teks
+                    ),
                     colors = TextFieldDefaults.textFieldColors(
                         containerColor = Color.Transparent,
-                        focusedIndicatorColor = Color(0xFF000000),
-                        unfocusedIndicatorColor = Color.LightGray,
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
+                        focusedIndicatorColor = if (isDarkTheme) Color.White else Color(0xFF000000),
+                        unfocusedIndicatorColor = if (isDarkTheme) Color.Gray else Color.LightGray
                     )
                 )
+
             }
 
             Button(
@@ -225,9 +248,9 @@ fun MoodTrackerApp(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF000000))
+                colors = ButtonDefaults.buttonColors(containerColor = if (isDarkTheme) Color.Gray else Color(0xFF000000))
             ) {
-                Text("Simpan Catatan", color = Color.White)
+                Text("Simpan Catatan", color = if (isDarkTheme) Color.Black else Color.White)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -237,7 +260,7 @@ fun MoodTrackerApp(
                     .fillMaxWidth()
                     .padding(8.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.7f))
+                colors = CardDefaults.cardColors(containerColor = if (isDarkTheme) Color.DarkGray else Color.White.copy(alpha = 0.7f))
             ) {
                 Column(modifier = Modifier.padding(8.dp)) {
                     Text(
@@ -245,7 +268,7 @@ fun MoodTrackerApp(
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF000000)
+                            color = if (isDarkTheme) Color.White else Color(0xFF000000)
                         ),
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
@@ -260,9 +283,9 @@ fun MoodTrackerApp(
                             Box(
                                 modifier = Modifier
                                     .size(24.dp)
-                                    .border(1.dp, Color.Gray.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
+                                    .border(1.dp, if (isDarkTheme) Color.White else Color.Gray.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
                                     .background(
-                                        color = if (mood == selectedMood) Color(0xFF000000) else Color.Transparent,
+                                        color = if (mood == selectedMood) (if (isDarkTheme) Color.White else Color(0xFF000000)) else Color.Transparent,
                                         shape = RoundedCornerShape(4.dp)
                                     )
                                     .clickable { selectedMood = mood }
@@ -271,7 +294,7 @@ fun MoodTrackerApp(
                             Text(
                                 text = mood,
                                 style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp),
-                                color = Color(0xFF000000)
+                                color = if (isDarkTheme) Color.White else Color(0xFF000000)
                             )
                         }
                     }
@@ -285,11 +308,12 @@ fun MoodTrackerApp(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF000000))
+                colors = ButtonDefaults.buttonColors(containerColor = if (isDarkTheme) Color.Gray else Color(0xFF000000))
             ) {
-                Text("Eksplor Lagu", color = Color.White)
+                Text("Eksplor Lagu", color = if (isDarkTheme) Color.Black else Color.White)
             }
         }
     }
 }
+
 

@@ -3,18 +3,25 @@ package id.dev.moody.ui
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import id.dev.moody.ui.ThemeViewModel
 import id.dev.novlityapp.R
 
 @Composable
-fun BottomNavigationBar(navController: NavController) { // Tambahkan NavController sebagai parameter
+fun BottomNavigationBar(
+    navController: NavController,
+    themeViewModel: ThemeViewModel // Ambil ViewModel sebagai parameter
+) {
+    val isDarkTheme by themeViewModel.isDarkTheme // Observasi tema
+
     NavigationBar(
-        containerColor = Color.White,
-        contentColor = Color.Black
+        containerColor = if (isDarkTheme) Color.DarkGray else Color.White, // Warna latar sesuai tema
+        contentColor = if (isDarkTheme) Color.White else Color.Black // Warna konten sesuai tema
     ) {
         NavigationBarItem(
             icon = {
@@ -28,7 +35,7 @@ fun BottomNavigationBar(navController: NavController) { // Tambahkan NavControll
             selected = false,
             onClick = {
                 navController.navigate("moodTracker") {
-                    popUpTo("moodTracker") { inclusive = true } // Menghapus semua layar sebelumnya.
+                    popUpTo("moodTracker") { inclusive = true } // Menghapus semua layar sebelumnya
                 }
             }
         )
@@ -44,7 +51,7 @@ fun BottomNavigationBar(navController: NavController) { // Tambahkan NavControll
             selected = false,
             onClick = {
                 navController.navigate("notes") {
-                    popUpTo("notes") { inclusive = true } // Menghapus semua layar sebelumnya.
+                    popUpTo("notes") { inclusive = true } // Menghapus semua layar sebelumnya
                 }
             }
         )
@@ -59,7 +66,9 @@ fun BottomNavigationBar(navController: NavController) { // Tambahkan NavControll
             label = { Text("Pengaturan") },
             selected = false,
             onClick = {
-                // Navigasi ke Pengaturan
+                navController.navigate("settings") {
+                    popUpTo("settings") { inclusive = true } // Menghapus semua layar sebelumnya
+                }
             }
         )
     }

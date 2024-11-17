@@ -29,10 +29,12 @@ import id.dev.novlityapp.R
 @Composable
 fun NotesScreen(
     navController: NavController,
+    themeViewModel: ThemeViewModel,
     notesList: List<Pair<String, String>>,
     onBack: () -> Unit,
     onDeleteNote: (Int) -> Unit // Callback untuk menghapus catatan
 ) {
+    val isDarkTheme by themeViewModel.isDarkTheme
     var showDeleteDialog by remember { mutableStateOf(false) }
     var selectedNoteIndex by remember { mutableStateOf(-1) }
 
@@ -44,12 +46,19 @@ fun NotesScreen(
                     IconButton(onClick = { onBack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Kembali")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.mediumTopAppBarColors(
+                    containerColor = if (isDarkTheme) Color.DarkGray else Color.White,
+                    titleContentColor = if (isDarkTheme) Color.White else Color.Black
+                )
             )
+
         },
         bottomBar = {
-            BottomNavigationBar(navController) // Teruskan NavController ke BottomNavigationBar
-        }
+            BottomNavigationBar(navController = navController, themeViewModel = themeViewModel)
+        },
+
+        containerColor = if (isDarkTheme) Color.Black else Color.White
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             if (notesList.isEmpty()) {
@@ -57,13 +66,14 @@ fun NotesScreen(
                     painter = painterResource(id = R.drawable.note2),
                     contentDescription = "Background Image",
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
+                    alpha = if (isDarkTheme) 0.5f else 1f
                 )
                 Text(
                     text = "Belum ada catatan yang disimpan.",
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontSize = 18.sp,
-                        color = Color.Black
+                        color = if (isDarkTheme) Color.White else Color.Black
                     ),
                     modifier = Modifier.align(Alignment.Center)
                 )
@@ -86,7 +96,9 @@ fun NotesScreen(
                                 )
                                 .animateContentSize(), // Animasi saat expand/collapse
                             shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f))
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isDarkTheme) Color.DarkGray else Color.White.copy(alpha = 0.9f)
+                            )
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 // Isi Catatan
@@ -95,7 +107,7 @@ fun NotesScreen(
                                     style = MaterialTheme.typography.bodyLarge.copy(
                                         fontSize = 16.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color.Black
+                                        color = if (isDarkTheme) Color.White else Color.Black
                                     )
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
@@ -105,7 +117,7 @@ fun NotesScreen(
                                     text = note.second,
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         fontSize = 14.sp,
-                                        color = Color.Gray
+                                        color = if (isDarkTheme) Color.LightGray else Color.Gray
                                     )
                                 )
 
@@ -131,8 +143,18 @@ fun NotesScreen(
         if (showDeleteDialog) {
             AlertDialog(
                 onDismissRequest = { showDeleteDialog = false },
-                title = { Text("Hapus Catatan") },
-                text = { Text("Apakah Anda yakin ingin menghapus catatan ini?") },
+                title = {
+                    Text(
+                        "Hapus Catatan",
+                        color = if (isDarkTheme) Color.White else Color.Black
+                    )
+                },
+                text = {
+                    Text(
+                        "Apakah Anda yakin ingin menghapus catatan ini?",
+                        color = if (isDarkTheme) Color.LightGray else Color.Gray
+                    )
+                },
                 confirmButton = {
                     TextButton(onClick = {
                         onDeleteNote(selectedNoteIndex)
@@ -143,12 +165,14 @@ fun NotesScreen(
                 },
                 dismissButton = {
                     TextButton(onClick = { showDeleteDialog = false }) {
-                        Text("Batal")
+                        Text("Batal", color = MaterialTheme.colorScheme.primary)
                     }
-                }
+                },
+                containerColor = if (isDarkTheme) Color.DarkGray else Color.White
             )
         }
     }
 }
+
 
 
