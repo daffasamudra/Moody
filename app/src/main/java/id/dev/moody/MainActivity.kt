@@ -33,15 +33,21 @@ import id.dev.moody.ui.SongRecommendationScreenRelax
 import id.dev.moody.ui.SongRecommendationScreenSpirit
 import id.dev.moody.ui.SongRecommendationScreenStress
 import id.dev.moody.ui.BottomNavigationBar
+import id.dev.moody.ui.NotesScreen
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContent {
             MoodyTheme {
                 val navController = rememberNavController()
+                val notesList = remember { mutableStateListOf<Pair<String, String>>() }
+
                 NavHost(navController = navController, startDestination = "moodTracker") {
                     composable("moodTracker") {
                         MoodTrackerApp(
@@ -52,8 +58,25 @@ class MainActivity : ComponentActivity() {
                                     "Santai" -> navController.navigate("songRecommendationSantai")
                                     "Semangat" -> navController.navigate("songRecommendationSemangat")
                                     "Stress" -> navController.navigate("songRecommendationStress")
-                                    else -> navController.navigate("songRecommendation/$selectedMood")
                                 }
+                            },
+                            onSaveNote = { note ->
+                                val currentTime = SimpleDateFormat(
+                                    "dd/MM/yyyy HH:mm:ss",
+                                    Locale.getDefault()
+                                ).format(Date())
+                                notesList.add(note to currentTime)
+                            },
+                            onViewNotesClick = { navController.navigate("notes") }
+                        )
+                    }
+                    composable("notes") {
+                        NotesScreen(
+                            navController = navController,
+                            notesList = notesList,
+                            onBack = { navController.popBackStack() },
+                            onDeleteNote = { index ->
+                                notesList.removeAt(index) // Hapus catatan dari daftar
                             }
                         )
                     }
@@ -137,10 +160,14 @@ class MainActivity : ComponentActivity() {
 
 
 @Composable
-fun MoodTrackerApp(modifier: Modifier = Modifier, onExploreSongsClick: (String) -> Unit) {
+fun MoodTrackerApp(
+    modifier: Modifier = Modifier,
+    onExploreSongsClick: (String) -> Unit,
+    onSaveNote: (String) -> Unit,
+    onViewNotesClick: () -> Unit
+) {
     var selectedMood by remember { mutableStateOf("Bahagia") }
     var notes by remember { mutableStateOf("") }
-    var savedNotes by remember { mutableStateOf("") }
     val moods = listOf("Bahagia", "Sedih", "Semangat", "Santai", "Stress")
 
     Box(
@@ -181,13 +208,20 @@ fun MoodTrackerApp(modifier: Modifier = Modifier, onExploreSongsClick: (String) 
                     colors = TextFieldDefaults.textFieldColors(
                         containerColor = Color.Transparent,
                         focusedIndicatorColor = Color(0xFF000000),
-                        unfocusedIndicatorColor = Color.LightGray
+                        unfocusedIndicatorColor = Color.LightGray,
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
                     )
                 )
             }
 
             Button(
-                onClick = { savedNotes = notes },
+                onClick = {
+                    if (notes.isNotBlank()) {
+                        onSaveNote.invoke(notes)
+                        notes = "" // Reset input setelah menyimpan catatan
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(8.dp),
@@ -197,15 +231,6 @@ fun MoodTrackerApp(modifier: Modifier = Modifier, onExploreSongsClick: (String) 
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-
-            if (savedNotes.isNotEmpty()) {
-                Text(
-                    text = "Catatan Tersimpan: $savedNotes",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(8.dp),
-                    color = Color.DarkGray
-                )
-            }
 
             Card(
                 modifier = Modifier
@@ -267,3 +292,4 @@ fun MoodTrackerApp(modifier: Modifier = Modifier, onExploreSongsClick: (String) 
         }
     }
 }
+

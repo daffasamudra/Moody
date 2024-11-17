@@ -43,7 +43,9 @@ fun BottomNavigationBar(navController: NavController) { // Tambahkan NavControll
             label = { Text("Catatan") },
             selected = false,
             onClick = {
-                // Navigasi ke Catatan
+                navController.navigate("notes") {
+                    popUpTo("notes") { inclusive = true } // Menghapus semua layar sebelumnya.
+                }
             }
         )
         NavigationBarItem(
