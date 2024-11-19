@@ -55,14 +55,16 @@ fun SongRecommendationScreen(
 
     // Fungsi untuk melanjutkan ke lagu berikutnya (skip)
     fun skipSong() {
+        // Pindah ke lagu berikutnya
         currentSongIndex = (currentSongIndex + 2) % songs.size // Jika lagu terakhir, kembali ke lagu pertama
-        PlayOrPauseSongRelax(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it }
+        playOrPauseSong(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it }
     }
 
     // Fungsi untuk kembali ke lagu sebelumnya (previous)
     fun previousSong() {
-        currentSongIndex = if (currentSongIndex > 0) currentSongIndex - 1 else songs.size - 3 // Jika lagu pertama, kembali ke lagu terakhir
-        PlayOrPauseSongRelax(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it }
+        // Pindah ke lagu sebelumnya
+        currentSongIndex = if (currentSongIndex > 0) currentSongIndex - 1 else songs.size - 1 // Jika lagu pertama, kembali ke lagu terakhir
+        playOrPauseSong(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it }
     }
 
     Scaffold(

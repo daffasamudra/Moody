@@ -60,7 +60,7 @@ fun SongRecommendationScreenSad(
 
     // Fungsi untuk kembali ke lagu sebelumnya (previous)
     fun previousSong() {
-        currentSongIndex = if (currentSongIndex > 0) currentSongIndex - 1 else songs.size - 3 // Jika lagu pertama, kembali ke lagu terakhir
+        currentSongIndex = if (currentSongIndex > 0) currentSongIndex - 1 else songs.size - 1 // Jika lagu pertama, kembali ke lagu terakhir
         playOrPauseSongSad(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it }
     }
 

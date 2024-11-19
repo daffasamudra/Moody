@@ -19,13 +19,19 @@ import androidx.navigation.NavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(navController: NavController, themeViewModel: ThemeViewModel) {
+fun SettingsScreen(
+    navController: NavController,
+    themeViewModel: ThemeViewModel,
+    onLogout: () -> Unit // Parameter onLogout untuk navigasi setelah logout
+) {
     val isDarkTheme by themeViewModel.isDarkTheme
     val context = LocalContext.current
     val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    val sharedPreferences = context.getSharedPreferences("login_preferences", Context.MODE_PRIVATE)
 
-    // Volume state
+    // State untuk volume
     var volume by remember { mutableStateOf(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)) }
+    var showLogoutDialog by remember { mutableStateOf(false) } // Untuk konfirmasi logout
 
     Scaffold(
         topBar = {
@@ -101,6 +107,51 @@ fun SettingsScreen(navController: NavController, themeViewModel: ThemeViewModel)
                 valueRange = 0f..audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC).toFloat(),
                 steps = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) - 1
             )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Logout Button
+            Button(
+                onClick = { showLogoutDialog = true },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isDarkTheme) Color.Gray else Color.Red
+                )
+            ) {
+                Text(
+                    text = "Logout",
+                    color = if (isDarkTheme) Color.White else Color.White
+                )
+            }
+
+            // Dialog Konfirmasi Logout
+            if (showLogoutDialog) {
+                AlertDialog(
+                    onDismissRequest = { showLogoutDialog = false },
+                    title = { Text("Logout") },
+                    text = { Text("Apakah Anda yakin ingin logout?") },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                // Hapus status login dari SharedPreferences
+                                with(sharedPreferences.edit()) {
+                                    putBoolean("is_logged_in", false)
+                                    apply()
+                                }
+                                showLogoutDialog = false
+                                onLogout() // Panggil navigasi logout
+                            }
+                        ) {
+                            Text("Ya")
+                        }
+                    },
+                    dismissButton = {
+                        Button(onClick = { showLogoutDialog = false }) {
+                            Text("Batal")
+                        }
+                    }
+                )
+            }
         }
     }
 }
