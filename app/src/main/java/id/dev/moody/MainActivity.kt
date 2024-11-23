@@ -5,6 +5,14 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.animateColor
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,7 +23,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -242,6 +252,40 @@ fun MainNavHost(
         }
     }
 
+@Composable
+fun AnimatedBackground(modifier: Modifier = Modifier, isDarkTheme: Boolean) {
+    // Create an infinite transition for the animation
+    val infiniteTransition = rememberInfiniteTransition()
+
+    // Define animated colors for the gradient based on theme
+    val color1 by infiniteTransition.animateColor(
+        initialValue = if (isDarkTheme) Color(0xFF5E35B1) else Color(0xFF85FFBD), // Dark Gray or Light Yellow
+        targetValue = if (isDarkTheme) Color(0xFF1C1F26) else Color(0xFF7FD8FF), // Darker Gray or Soft Orange
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+    val color2 by infiniteTransition.animateColor(
+        initialValue = if (isDarkTheme) Color(0xFF0D1117) else Color(0xFF7FD8FF), // Darker Gray or Vibrant Yellow
+        targetValue = if (isDarkTheme) Color(0xFF1C1F26) else Color(0xFFFFC3A0), // Deep Dark Gray or Light Yellow
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
+    // Apply the animated gradient as the background
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(color1, color2)
+                )
+            )
+    )
+}
 
 
 @Composable
@@ -255,7 +299,13 @@ fun MoodTrackerApp(
     val isDarkTheme by themeViewModel.isDarkTheme
     var selectedMood by remember { mutableStateOf("Bahagia") }
     var notes by remember { mutableStateOf("") }
-    val moods = listOf("Bahagia", "Sedih", "Semangat", "Santai", "Stress")
+    val moods = listOf(
+        "Bahagia" to "😊",
+        "Santai" to "😌",
+        "Stress" to "😡",
+        "Sedih" to "😢",
+        "Semangat" to "😆"
+    )
 
     // Ambil nama pengguna dari SharedPreferences
     val context = LocalContext.current
@@ -265,22 +315,28 @@ fun MoodTrackerApp(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(if (isDarkTheme) Color.Black else Color.White)
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.inputbgr),
-            contentDescription = "Background Image",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop,
-            alpha = if (isDarkTheme) 0.50f else 0.80f
-        )
+        // Use the animated background
+        AnimatedBackground(isDarkTheme = isDarkTheme)
 
+        // Content of the MoodTrackerApp
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            Spacer(modifier = Modifier.height(50.dp))
+            Spacer(modifier = Modifier.height(1.dp))
+
+            // MoodifyText Image
+            Image(
+                painter = painterResource(id = R.drawable.moodifytext), // Use your resource ID here
+                contentDescription = "Moodify Text Logo",
+                modifier = Modifier
+                    .height(100.dp) // Adjust height as needed
+                    .align(Alignment.Start) // Align the image to the top-left corner
+                    .padding(start = 9.dp) // Add padding from the edges if needed
+                    .size(115.dp)
+            )
 
             // Teks ucapan selamat datang
             Text(
@@ -364,28 +420,43 @@ fun MoodTrackerApp(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
-                    moods.forEach { mood ->
+                    moods.forEach { (mood, emoji) ->
+                        val isSelected = selectedMood == mood
+
+                        // Animasi untuk ukuran emoji
+                        val animatedScale = animateFloatAsState(
+                            targetValue = if (isSelected) 1.5f else 1.0f
+                        )
+
+                        // Animasi untuk warna teks
+                        val animatedColor by animateColorAsState(
+                            targetValue = if (isSelected) Color(0xFFF3B81A) else if (isDarkTheme) Color.White else Color.Black
+                        )
+
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 8.dp),
+                                .padding(vertical = 8.dp)
+                                .clickable { selectedMood = mood },
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Box(
+                            // Emoji dengan animasi ukuran
+                            Text(
+                                text = emoji,
+                                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 24.sp),
                                 modifier = Modifier
-                                    .size(24.dp)
-                                    .border(1.dp, if (isDarkTheme) Color.White else Color.Gray.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
-                                    .background(
-                                        color = if (mood == selectedMood) (if (isDarkTheme) Color.White else Color(0xFF000000)) else Color.Transparent,
-                                        shape = RoundedCornerShape(4.dp)
+                                    .padding(end = 16.dp)
+                                    .graphicsLayer(
+                                        scaleX = animatedScale.value,
+                                        scaleY = animatedScale.value
                                     )
-                                    .clickable { selectedMood = mood }
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
+
+                            // Mood Text dengan animasi warna
                             Text(
                                 text = mood,
                                 style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp),
-                                color = if (isDarkTheme) Color.White else Color(0xFF000000)
+                                color = animatedColor
                             )
                         }
                     }
@@ -406,6 +477,8 @@ fun MoodTrackerApp(
         }
     }
 }
+
+
 
 
 

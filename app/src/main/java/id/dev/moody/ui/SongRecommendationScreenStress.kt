@@ -2,7 +2,14 @@ package id.dev.moody.ui
 
 import android.content.Context
 import android.media.MediaPlayer
+import androidx.compose.animation.animateColor
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,6 +25,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -32,6 +40,42 @@ import id.dev.novlityapp.R
 
 // Impor BottomNavigationBar dari BottomNavigationBar.kt
 
+@Composable
+fun AnimatedBackgroundStress(modifier: Modifier = Modifier) {
+    // Create an infinite transition for the animation
+    val infiniteTransition = rememberInfiniteTransition()
+
+    // Define animated colors for the gradient
+    val color1 by infiniteTransition.animateColor(
+        initialValue = Color(0xFFFF6347), // Intense Red
+        targetValue = Color(0xFFD32F2F), // Deep Crimson
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+    val color2 by infiniteTransition.animateColor(
+        initialValue = Color(0xFFD32F2F), // Deep Crimson
+        targetValue = Color(0xFFF57F17), // Burnt Orange
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
+    // Apply the animated gradient as the background
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(color1, color2)
+                )
+            )
+    )
+}
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SongRecommendationScreenStress(
@@ -42,7 +86,7 @@ fun SongRecommendationScreenStress(
     songs: List<Song> = emptyList()
 ) {
     val context = LocalContext.current
-    var currentSongIndex by remember { mutableStateOf(0) } // Menyimpan indeks lagu yang sedang diputar
+    var currentSongIndex by remember { mutableStateOf(0) }
     var isPlaying by remember { mutableStateOf(false) }
     val isDarkTheme by themeViewModel.isDarkTheme
 
@@ -52,15 +96,15 @@ fun SongRecommendationScreenStress(
         }
     }
 
-    // Fungsi untuk melanjutkan ke lagu berikutnya (skip)
+    // Skip to the next song
     fun skipSong() {
-        currentSongIndex = (currentSongIndex + 2) % songs.size // Jika lagu terakhir, kembali ke lagu pertama
+        currentSongIndex = (currentSongIndex + 1) % songs.size
         playOrPauseSongStress(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it }
     }
 
-    // Fungsi untuk kembali ke lagu sebelumnya (previous)
+    // Go to the previous song
     fun previousSong() {
-        currentSongIndex = if (currentSongIndex > 0) currentSongIndex - 1 else songs.size - 1 // Jika lagu pertama, kembali ke lagu terakhir
+        currentSongIndex = if (currentSongIndex > 0) currentSongIndex - 1 else songs.size - 1
         playOrPauseSongStress(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it }
     }
 
@@ -85,20 +129,15 @@ fun SongRecommendationScreenStress(
         bottomBar = {
             BottomNavigationBar(navController = navController, themeViewModel = themeViewModel)
         },
-        containerColor = if (isDarkTheme) Color.Black else Color.White
+        containerColor = Color.Transparent // Allow the animated background to show
     ) { padding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.bgrmarah),
-                contentDescription = "Background Stress",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop,
-                alpha = if (isDarkTheme) 0.5f else 1f
-            )
+            // Animated Background for Stress Mood
+            AnimatedBackgroundStress()
 
             Column(
                 modifier = Modifier
@@ -189,6 +228,7 @@ fun SongRecommendationScreenStress(
         }
     }
 }
+
 
 @Composable
 fun SongListItemStress(index: Int, song: Song, backgroundColor: Color, onPlayClick: () -> Unit) {

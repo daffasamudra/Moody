@@ -2,7 +2,14 @@ package id.dev.moody.ui
 
 import android.content.Context
 import android.media.MediaPlayer
+import androidx.compose.animation.animateColor
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,6 +25,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -32,6 +40,42 @@ import id.dev.novlityapp.R
 
 // Impor BottomNavigationBar dari BottomNavigationBar.kt
 
+@Composable
+fun AnimatedBackgroundRelax(modifier: Modifier = Modifier) {
+    // Create an infinite transition for the animation
+    val infiniteTransition = rememberInfiniteTransition()
+
+    // Define animated colors for the gradient
+    val color1 by infiniteTransition.animateColor(
+        initialValue = Color(0xFFB2FF59), // Light Green
+        targetValue = Color(0xFF81C784), // Medium Green
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+    val color2 by infiniteTransition.animateColor(
+        initialValue = Color(0xFF81C784), // Medium Green
+        targetValue = Color(0xFF388E3C), // Dark Green
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
+    // Apply the animated gradient as the background
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(color1, color2)
+                )
+            )
+    )
+}
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SongRecommendationScreenRelax(
@@ -42,7 +86,7 @@ fun SongRecommendationScreenRelax(
     songs: List<Song> = emptyList()
 ) {
     val context = LocalContext.current
-    var currentSongIndex by remember { mutableStateOf(0) } // Menyimpan indeks lagu yang sedang diputar
+    var currentSongIndex by remember { mutableStateOf(0) } // Index of the currently playing song
     var isPlaying by remember { mutableStateOf(false) }
     val isDarkTheme by themeViewModel.isDarkTheme
 
@@ -52,15 +96,15 @@ fun SongRecommendationScreenRelax(
         }
     }
 
-    // Fungsi untuk melanjutkan ke lagu berikutnya (skip)
+    // Function to skip to the next song
     fun skipSong() {
-        currentSongIndex = (currentSongIndex + 2) % songs.size // Jika lagu terakhir, kembali ke lagu pertama
+        currentSongIndex = (currentSongIndex + 1) % songs.size // Loop back to the first song
         PlayOrPauseSongRelax(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it }
     }
 
-    // Fungsi untuk kembali ke lagu sebelumnya (previous)
+    // Function to go to the previous song
     fun previousSong() {
-        currentSongIndex = if (currentSongIndex > 0) currentSongIndex - 1 else songs.size - 1 // Jika lagu pertama, kembali ke lagu terakhir
+        currentSongIndex = if (currentSongIndex > 0) currentSongIndex - 1 else songs.size - 1
         PlayOrPauseSongRelax(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it }
     }
 
@@ -85,20 +129,15 @@ fun SongRecommendationScreenRelax(
         bottomBar = {
             BottomNavigationBar(navController = navController, themeViewModel = themeViewModel)
         },
-        containerColor = if (isDarkTheme) Color.Black else Color.White
+        containerColor = Color.Transparent // Allow the animated background to be visible
     ) { padding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.bgrsantai),
-                contentDescription = "Background Santai",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop,
-                alpha = if (isDarkTheme) 0.5f else 1f
-            )
+            // Animated Background for Relax Mood
+            AnimatedBackgroundRelax()
 
             Column(
                 modifier = Modifier
@@ -106,8 +145,8 @@ fun SongRecommendationScreenRelax(
                     .padding(16.dp)
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.ftsantai), // Gambar mood santai
-                    contentDescription = "Gambar Mood Santai",
+                    painter = painterResource(id = R.drawable.ftsantai), // Image for relax mood
+                    contentDescription = "Mood Image",
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(180.dp)
@@ -147,8 +186,8 @@ fun SongRecommendationScreenRelax(
                         horizontalArrangement = Arrangement.SpaceAround
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.iconsantai), // Placeholder untuk album art santai
-                            contentDescription = "Album Art Santai",
+                            painter = painterResource(id = R.drawable.iconsantai), // Placeholder album art
+                            contentDescription = "Album Art",
                             modifier = Modifier.size(50.dp)
                         )
                         IconButton(onClick = { previousSong() }) {
@@ -189,6 +228,7 @@ fun SongRecommendationScreenRelax(
         }
     }
 }
+
 
 @Composable
 fun SongListItemRelax(index: Int, song: Song, backgroundColor: Color, onPlayClick: () -> Unit) {

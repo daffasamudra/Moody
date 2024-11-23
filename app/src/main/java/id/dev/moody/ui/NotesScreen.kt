@@ -62,13 +62,6 @@ fun NotesScreen(
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             if (notesList.isEmpty()) {
-                Image(
-                    painter = painterResource(id = R.drawable.note2),
-                    contentDescription = "Background Image",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop,
-                    alpha = if (isDarkTheme) 0.5f else 1f
-                )
                 Text(
                     text = "Belum ada catatan yang disimpan.",
                     style = MaterialTheme.typography.bodyLarge.copy(

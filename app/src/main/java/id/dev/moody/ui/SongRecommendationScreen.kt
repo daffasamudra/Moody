@@ -2,7 +2,14 @@ package id.dev.moody.ui
 
 import android.content.Context
 import android.media.MediaPlayer
+import androidx.compose.animation.animateColor
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,6 +25,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -29,7 +37,40 @@ import androidx.navigation.NavController
 import id.dev.moody.database.Song
 import id.dev.novlityapp.R
 
-// Impor BottomNavigationBar dari BottomNavigationBar.kt
+@Composable
+fun AnimatedBackgroundHappy(modifier: Modifier = Modifier, isDarkTheme: Boolean) {
+    // Create an infinite transition for the animation
+    val infiniteTransition = rememberInfiniteTransition()
+
+    // Define animated colors for the gradient based on theme
+    val color1 by infiniteTransition.animateColor(
+        initialValue = if (isDarkTheme) Color(0xFF5E35B1) else Color(0xFFF1B125), // Dark Gray or Light Yellow
+        targetValue = if (isDarkTheme) Color(0xFF1C1F26) else Color(0xFFE5D73C), // Darker Gray or Soft Orange
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+    val color2 by infiniteTransition.animateColor(
+        initialValue = if (isDarkTheme) Color(0xFF0D1117) else Color(0xFFE5D73C), // Darker Gray or Vibrant Yellow
+        targetValue = if (isDarkTheme) Color(0xFF1C1F26) else Color(0xFFF1B125), // Deep Dark Gray or Light Yellow
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
+    // Apply the animated gradient as the background
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(color1, color2)
+                )
+            )
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,29 +83,27 @@ fun SongRecommendationScreen(
     songs: List<Song> = emptyList()
 ) {
     val context = LocalContext.current
-    var currentSongIndex by remember { mutableStateOf(0) } // Menyimpan indeks lagu yang sedang diputar
+    var currentSongIndex by remember { mutableStateOf(0) } // Index of the currently playing song
     var isPlaying by remember { mutableStateOf(false) }
     val isDarkTheme by themeViewModel.isDarkTheme
 
-    // Bersihkan MediaPlayer saat keluar dari layar
+    // Function to skip to the next song
+    fun skipSong() {
+        currentSongIndex = (currentSongIndex + 1) % songs.size // Loop back to the first song
+        playOrPauseSong(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it }
+    }
+
+    // Function to go to the previous song
+    fun previousSong() {
+        currentSongIndex = if (currentSongIndex > 0) currentSongIndex - 1 else songs.size - 1
+        playOrPauseSong(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it }
+    }
+
+    // Clean up MediaPlayer when exiting the screen
     DisposableEffect(Unit) {
         onDispose {
             mediaPlayer.release()
         }
-    }
-
-    // Fungsi untuk melanjutkan ke lagu berikutnya (skip)
-    fun skipSong() {
-        // Pindah ke lagu berikutnya
-        currentSongIndex = (currentSongIndex + 2) % songs.size // Jika lagu terakhir, kembali ke lagu pertama
-        playOrPauseSong(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it }
-    }
-
-    // Fungsi untuk kembali ke lagu sebelumnya (previous)
-    fun previousSong() {
-        // Pindah ke lagu sebelumnya
-        currentSongIndex = if (currentSongIndex > 0) currentSongIndex - 1 else songs.size - 1 // Jika lagu pertama, kembali ke lagu terakhir
-        playOrPauseSong(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it }
     }
 
     Scaffold(
@@ -88,21 +127,15 @@ fun SongRecommendationScreen(
         bottomBar = {
             BottomNavigationBar(navController = navController, themeViewModel = themeViewModel)
         },
-        containerColor = if (isDarkTheme) Color.Black else Color.White
+        containerColor = Color.Transparent // Allow the animated background to be visible
     ) { padding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Background wallpaper
-            Image(
-                painter = painterResource(id = R.drawable.bgrhappy), // Background wallpaper yang sama dengan MainActivity
-                contentDescription = "Background Wallpaper",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop,
-                alpha = if (isDarkTheme) 0.5f else 1f
-            )
+            // Pass `isDarkTheme` to the AnimatedBackground
+            AnimatedBackgroundHappy(isDarkTheme = isDarkTheme)
 
             Column(
                 modifier = Modifier
@@ -110,8 +143,8 @@ fun SongRecommendationScreen(
                     .padding(16.dp)
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.fotohappy), // Gambar khusus untuk mood happy
-                    contentDescription = "Gambar Mood Happy",
+                    painter = painterResource(id = R.drawable.fotohappy), // Specific image for the mood
+                    contentDescription = "Mood Image",
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(180.dp)
@@ -150,8 +183,8 @@ fun SongRecommendationScreen(
                         horizontalArrangement = Arrangement.SpaceAround
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.iconhappy), // Gambar album art happy
-                            contentDescription = "Album Art Happy",
+                            painter = painterResource(id = R.drawable.iconhappy), // Album art
+                            contentDescription = "Album Art",
                             modifier = Modifier.size(50.dp)
                         )
                         IconButton(onClick = { previousSong() }) {
@@ -161,7 +194,7 @@ fun SongRecommendationScreen(
                                 tint = if (isDarkTheme) Color.LightGray else Color.White
                             )
                         }
-                        IconButton(onClick = { PlayOrPauseSongRelax(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it } }) {
+                        IconButton(onClick = { playOrPauseSong(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it } }) {
                             Icon(
                                 imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                                 contentDescription = if (isPlaying) "Pause" else "Play",
@@ -184,7 +217,7 @@ fun SongRecommendationScreen(
                     itemsIndexed(songs) { index, song ->
                         SongListItemHappy(index + 1, song, if (isDarkTheme) Color.Gray else Color(0xFFFFEB3B)) {
                             currentSongIndex = index
-                            PlayOrPauseSongRelax(context, mediaPlayer, song) { isPlaying = it }
+                            playOrPauseSong(context, mediaPlayer, song) { isPlaying = it }
                         }
                     }
                 }
@@ -255,4 +288,3 @@ fun playOrPauseSong(
         onPlaybackChange(false) // Reset icon to Play when song finishes
     }
 }
-
