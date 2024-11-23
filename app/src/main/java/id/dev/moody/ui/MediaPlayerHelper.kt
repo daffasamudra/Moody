@@ -16,13 +16,14 @@ class MediaPlayerHelper(
     private val coroutineScope: CoroutineScope
 ) {
     private val mediaPlayer: MediaPlayer = MediaPlayer()
-    var currentSongIndex = 0
+    var currentSongIndex by mutableStateOf(-1) // Initially set to -1 to indicate no song selected
     var isPlaying by mutableStateOf(false)
     var currentPosition by mutableStateOf(0)
     var duration by mutableStateOf(0)
 
     init {
         startUpdatingCurrentPosition()
+        setOnCompletionListener()  // Set the completion listener here
     }
 
     // Function to update the current position continuously
@@ -39,27 +40,19 @@ class MediaPlayerHelper(
 
     // Function to play a song by index
     fun playSong(index: Int) {
-        if (index >= songs.size) return
+        if (index < 0 || index >= songs.size) return
         val song = songs[index]
         val resId = song.filePath
         if (resId == 0) return
 
-        if (mediaPlayer.isPlaying) {
-            // If already playing, simply continue from where it is
+        // Reset the media player and prepare the new song
+        mediaPlayer.reset()
+        mediaPlayer.setDataSource(context, android.net.Uri.parse("android.resource://${context.packageName}/$resId"))
+        mediaPlayer.prepareAsync()
+        mediaPlayer.setOnPreparedListener {
+            duration = mediaPlayer.duration
             mediaPlayer.start()
             isPlaying = true
-        } else {
-            // If the media player has been reset or hasn't played anything, prepare it
-            mediaPlayer.reset()
-            mediaPlayer.setDataSource(context, android.net.Uri.parse("android.resource://${context.packageName}/$resId"))
-            mediaPlayer.prepareAsync()
-            mediaPlayer.setOnPreparedListener {
-                duration = mediaPlayer.duration
-                // Start from currentPosition if it was paused before
-                mediaPlayer.seekTo(currentPosition)
-                mediaPlayer.start()
-                isPlaying = true
-            }
         }
     }
 
@@ -67,17 +60,29 @@ class MediaPlayerHelper(
     fun pauseSong() {
         if (mediaPlayer.isPlaying) {
             mediaPlayer.pause()
+            currentPosition = mediaPlayer.currentPosition
             isPlaying = false
         }
     }
 
     // Function to play or pause the current song
-    fun playOrPauseSong() {
+    fun playOrPauseSong(): Boolean {
+        if (!hasSongSelected()) {
+            // Return false indicating no song is selected, caller will handle the warning
+            return false
+        }
+
         if (isPlaying) {
             pauseSong()
         } else {
-            playSong(currentSongIndex)
+            mediaPlayer.apply {
+                if (!isPlaying) {
+                    start()
+                }
+            }
+            isPlaying = !isPlaying
         }
+        return true // Return true indicating song play/pause operation was successful
     }
 
     // Function to skip to the next song
@@ -94,8 +99,13 @@ class MediaPlayerHelper(
         playSong(currentSongIndex)
     }
 
+    // Function to check if a song has been selected
+    fun hasSongSelected(): Boolean {
+        return currentSongIndex >= 0 && currentSongIndex < songs.size
+    }
+
     // Set completion listener to automatically play the next song
-    fun setOnCompletionListener() {
+    private fun setOnCompletionListener() {
         mediaPlayer.setOnCompletionListener {
             skipSong()
         }

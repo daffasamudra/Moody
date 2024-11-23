@@ -34,7 +34,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import id.dev.moody.database.Song
 import id.dev.novlityapp.R
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -81,14 +80,13 @@ fun SongRecommendationScreen(
     val context = LocalContext.current
     val isDarkTheme by themeViewModel.isDarkTheme
     val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val mediaPlayerHelper = remember {
         MediaPlayerHelper(context, songs, coroutineScope)
     }
 
     DisposableEffect(Unit) {
-        mediaPlayerHelper.setOnCompletionListener()
-
         onDispose {
             mediaPlayerHelper.release()
         }
@@ -115,6 +113,7 @@ fun SongRecommendationScreen(
         bottomBar = {
             BottomNavigationBar(navController = navController, themeViewModel = themeViewModel)
         },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         containerColor = Color.Transparent
     ) { padding ->
 
@@ -169,7 +168,16 @@ fun SongRecommendationScreen(
                                 )
                             }
                             IconButton(onClick = {
-                                mediaPlayerHelper.playOrPauseSong()
+                                if (!mediaPlayerHelper.hasSongSelected()) {
+                                    // Menampilkan notifikasi jika lagu belum dipilih
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            message = "Silahkan pilih lagu terlebih dahulu"
+                                        )
+                                    }
+                                } else {
+                                    mediaPlayerHelper.playOrPauseSong()
+                                }
                             }) {
                                 Icon(
                                     if (mediaPlayerHelper.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,

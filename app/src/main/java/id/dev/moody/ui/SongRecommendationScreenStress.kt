@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import id.dev.moody.database.Song
 import id.dev.novlityapp.R
+import kotlinx.coroutines.launch
 
 // Impor BottomNavigationBar dari BottomNavigationBar.kt
 
@@ -87,15 +88,13 @@ fun SongRecommendationScreenStress(
     val context = LocalContext.current
     val isDarkTheme by themeViewModel.isDarkTheme
     val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    // Inisialisasi helper untuk media player
     val mediaPlayerHelper = remember {
         MediaPlayerHelper(context, songs, coroutineScope)
     }
 
     DisposableEffect(Unit) {
-        mediaPlayerHelper.setOnCompletionListener()
-
         onDispose {
             mediaPlayerHelper.release()
         }
@@ -122,6 +121,7 @@ fun SongRecommendationScreenStress(
         bottomBar = {
             BottomNavigationBar(navController = navController, themeViewModel = themeViewModel)
         },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         containerColor = Color.Transparent // Allow the animated background to be visible
     ) { padding ->
         Box(
@@ -129,7 +129,6 @@ fun SongRecommendationScreenStress(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Animated Background for Stress Mood
             AnimatedBackgroundStress(isDarkTheme = isDarkTheme)
 
             Column(
@@ -189,7 +188,15 @@ fun SongRecommendationScreenStress(
                                 )
                             }
                             IconButton(onClick = {
-                                mediaPlayerHelper.playOrPauseSong()
+                                if (!mediaPlayerHelper.hasSongSelected()) {
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            message = "Silahkan pilih lagu terlebih dahulu"
+                                        )
+                                    }
+                                } else {
+                                    mediaPlayerHelper.playOrPauseSong()
+                                }
                             }) {
                                 Icon(
                                     if (mediaPlayerHelper.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
