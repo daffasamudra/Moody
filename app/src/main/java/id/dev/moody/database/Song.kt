@@ -8,6 +8,8 @@ data class Song(
     val title: String,
     val artist: String,
     val mood: String,
-    val filePath: Int,  // Menggunakan Int untuk filePath
+    val filePath: Int,  // ID file di res/raw
+    val duration: Int,  // Durasi dalam detik
     @PrimaryKey(autoGenerate = true) val id: Int = 0
 )
+

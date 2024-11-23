@@ -41,22 +41,22 @@ import id.dev.novlityapp.R
 // Impor BottomNavigationBar dari BottomNavigationBar.kt
 
 @Composable
-fun AnimatedBackgroundRelax(modifier: Modifier = Modifier) {
+fun AnimatedBackgroundRelax(modifier: Modifier = Modifier, isDarkTheme: Boolean) {
     // Create an infinite transition for the animation
     val infiniteTransition = rememberInfiniteTransition()
 
     // Define animated colors for the gradient
     val color1 by infiniteTransition.animateColor(
-        initialValue = Color(0xFFB2FF59), // Light Green
-        targetValue = Color(0xFF81C784), // Medium Green
+        initialValue = if (isDarkTheme) Color(0xFF5E35B1) else Color(0xFFB2FF59), // Dark Gray or Light Yellow
+        targetValue = if (isDarkTheme) Color(0xFF1C1F26) else Color(0xFF81C784), // Darker Gray or Soft Orange
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 3000, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
         )
     )
     val color2 by infiniteTransition.animateColor(
-        initialValue = Color(0xFF81C784), // Medium Green
-        targetValue = Color(0xFF388E3C), // Dark Green
+        initialValue = if (isDarkTheme) Color(0xFF0D1117) else Color(0xFF81C784), // Darker Gray or Vibrant Yellow
+        targetValue = if (isDarkTheme) Color(0xFF1C1F26) else Color(0xFF388E3C), // Deep Dark Gray or Light Yellow
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 3000, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
@@ -82,30 +82,22 @@ fun SongRecommendationScreenRelax(
     navController: NavController,
     themeViewModel: ThemeViewModel,
     onBack: () -> Unit,
-    mediaPlayer: MediaPlayer = MediaPlayer(),
-    songs: List<Song> = emptyList()
+    songs: List<Song>
 ) {
     val context = LocalContext.current
-    var currentSongIndex by remember { mutableStateOf(0) } // Index of the currently playing song
-    var isPlaying by remember { mutableStateOf(false) }
     val isDarkTheme by themeViewModel.isDarkTheme
+    val coroutineScope = rememberCoroutineScope()
+
+    val mediaPlayerHelper = remember {
+        MediaPlayerHelper(context, songs, coroutineScope)
+    }
 
     DisposableEffect(Unit) {
+        mediaPlayerHelper.setOnCompletionListener()
+
         onDispose {
-            mediaPlayer.release()
+            mediaPlayerHelper.release()
         }
-    }
-
-    // Function to skip to the next song
-    fun skipSong() {
-        currentSongIndex = (currentSongIndex + 1) % songs.size // Loop back to the first song
-        PlayOrPauseSongRelax(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it }
-    }
-
-    // Function to go to the previous song
-    fun previousSong() {
-        currentSongIndex = if (currentSongIndex > 0) currentSongIndex - 1 else songs.size - 1
-        PlayOrPauseSongRelax(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it }
     }
 
     Scaffold(
@@ -114,7 +106,7 @@ fun SongRecommendationScreenRelax(
                 title = { Text("Rekomendasi Lagu - Santai") },
                 navigationIcon = {
                     IconButton(onClick = {
-                        mediaPlayer.stop()
+                        mediaPlayerHelper.pauseSong()
                         onBack()
                     }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -137,7 +129,7 @@ fun SongRecommendationScreenRelax(
                 .padding(padding)
         ) {
             // Animated Background for Relax Mood
-            AnimatedBackgroundRelax()
+            AnimatedBackgroundRelax(isDarkTheme = isDarkTheme)
 
             Column(
                 modifier = Modifier
@@ -171,44 +163,76 @@ fun SongRecommendationScreenRelax(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(80.dp)
+                        .height(140.dp)
                         .padding(8.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = if (isDarkTheme) Color.Gray else Color(0xFF20AD2C)
                     )
                 ) {
-                    Row(
+                    Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceAround
+                            .padding(8.dp)
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.iconsantai), // Placeholder album art
-                            contentDescription = "Album Art",
-                            modifier = Modifier.size(50.dp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            IconButton(onClick = { mediaPlayerHelper.previousSong() }) {
+                                Icon(
+                                    Icons.Rounded.SkipPrevious,
+                                    contentDescription = "Previous",
+                                    tint = if (isDarkTheme) Color.White else Color.Black
+                                )
+                            }
+                            IconButton(onClick = {
+                                mediaPlayerHelper.playOrPauseSong()
+                            }) {
+                                Icon(
+                                    if (mediaPlayerHelper.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                    contentDescription = if (mediaPlayerHelper.isPlaying) "Pause" else "Play",
+                                    tint = if (isDarkTheme) Color.White else Color.Black
+                                )
+                            }
+                            IconButton(onClick = { mediaPlayerHelper.skipSong() }) {
+                                Icon(
+                                    Icons.Rounded.SkipNext,
+                                    contentDescription = "Next",
+                                    tint = if (isDarkTheme) Color.White else Color.Black
+                                )
+                            }
+                        }
+
+                        // Slider for controlling the song position
+                        Slider(
+                            value = mediaPlayerHelper.currentPosition.toFloat(),
+                            onValueChange = { newPosition ->
+                                mediaPlayerHelper.seekTo(newPosition.toInt())
+                            },
+                            valueRange = 0f..mediaPlayerHelper.duration.toFloat(),
+                            colors = SliderDefaults.colors(
+                                thumbColor = if (isDarkTheme) Color.White else Color.Black,
+                                activeTrackColor = if (isDarkTheme) Color.White else Color.Black
+                            ),
+                            modifier = Modifier.fillMaxWidth()
                         )
-                        IconButton(onClick = { previousSong() }) {
-                            Icon(
-                                Icons.Rounded.SkipPrevious,
-                                contentDescription = "Previous",
-                                tint = if (isDarkTheme) Color.LightGray else Color.White
+
+                        // Display current and total song time
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = formatTime(mediaPlayerHelper.currentPosition),
+                                style = MaterialTheme.typography.bodySmall
                             )
-                        }
-                        IconButton(onClick = { PlayOrPauseSongRelax(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it } }) {
-                            Icon(
-                                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                contentDescription = if (isPlaying) "Pause" else "Play",
-                                tint = if (isDarkTheme) Color.LightGray else Color.White
-                            )
-                        }
-                        IconButton(onClick = { skipSong() }) {
-                            Icon(
-                                Icons.Rounded.SkipNext,
-                                contentDescription = "Next",
-                                tint = if (isDarkTheme) Color.LightGray else Color.White
+                            Text(
+                                text = formatTime(mediaPlayerHelper.duration),
+                                style = MaterialTheme.typography.bodySmall
                             )
                         }
                     }
@@ -219,8 +243,8 @@ fun SongRecommendationScreenRelax(
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     itemsIndexed(songs) { index, song ->
                         SongListItemRelax(index + 1, song, if (isDarkTheme) Color.Gray else Color(0xFF20AD2C)) {
-                            currentSongIndex = index
-                            PlayOrPauseSongRelax(context, mediaPlayer, song) { isPlaying = it }
+                            mediaPlayerHelper.currentSongIndex = index
+                            mediaPlayerHelper.playSong(index)
                         }
                     }
                 }

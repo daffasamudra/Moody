@@ -27,40 +27,37 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import id.dev.moody.database.Song
 import id.dev.novlityapp.R
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun AnimatedBackgroundHappy(modifier: Modifier = Modifier, isDarkTheme: Boolean) {
-    // Create an infinite transition for the animation
     val infiniteTransition = rememberInfiniteTransition()
 
-    // Define animated colors for the gradient based on theme
     val color1 by infiniteTransition.animateColor(
-        initialValue = if (isDarkTheme) Color(0xFF5E35B1) else Color(0xFFF1B125), // Dark Gray or Light Yellow
-        targetValue = if (isDarkTheme) Color(0xFF1C1F26) else Color(0xFFE5D73C), // Darker Gray or Soft Orange
+        initialValue = if (isDarkTheme) Color(0xFF5E35B1) else Color(0xFFF1B125),
+        targetValue = if (isDarkTheme) Color(0xFF1C1F26) else Color(0xFFE5D73C),
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 3000, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
         )
     )
     val color2 by infiniteTransition.animateColor(
-        initialValue = if (isDarkTheme) Color(0xFF0D1117) else Color(0xFFE5D73C), // Darker Gray or Vibrant Yellow
-        targetValue = if (isDarkTheme) Color(0xFF1C1F26) else Color(0xFFF1B125), // Deep Dark Gray or Light Yellow
+        initialValue = if (isDarkTheme) Color(0xFF0D1117) else Color(0xFFE5D73C),
+        targetValue = if (isDarkTheme) Color(0xFF1C1F26) else Color(0xFFF1B125),
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 3000, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
         )
     )
 
-    // Apply the animated gradient as the background
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -79,30 +76,21 @@ fun SongRecommendationScreen(
     themeViewModel: ThemeViewModel,
     selectedMood: String,
     onBack: () -> Unit,
-    mediaPlayer: MediaPlayer = MediaPlayer(),
-    songs: List<Song> = emptyList()
+    songs: List<Song>
 ) {
     val context = LocalContext.current
-    var currentSongIndex by remember { mutableStateOf(0) } // Index of the currently playing song
-    var isPlaying by remember { mutableStateOf(false) }
     val isDarkTheme by themeViewModel.isDarkTheme
+    val coroutineScope = rememberCoroutineScope()
 
-    // Function to skip to the next song
-    fun skipSong() {
-        currentSongIndex = (currentSongIndex + 1) % songs.size // Loop back to the first song
-        playOrPauseSong(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it }
+    val mediaPlayerHelper = remember {
+        MediaPlayerHelper(context, songs, coroutineScope)
     }
 
-    // Function to go to the previous song
-    fun previousSong() {
-        currentSongIndex = if (currentSongIndex > 0) currentSongIndex - 1 else songs.size - 1
-        playOrPauseSong(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it }
-    }
-
-    // Clean up MediaPlayer when exiting the screen
     DisposableEffect(Unit) {
+        mediaPlayerHelper.setOnCompletionListener()
+
         onDispose {
-            mediaPlayer.release()
+            mediaPlayerHelper.release()
         }
     }
 
@@ -112,7 +100,7 @@ fun SongRecommendationScreen(
                 title = { Text("Rekomendasi Lagu - $selectedMood") },
                 navigationIcon = {
                     IconButton(onClick = {
-                        mediaPlayer.stop()
+                        mediaPlayerHelper.pauseSong()
                         onBack()
                     }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -127,14 +115,14 @@ fun SongRecommendationScreen(
         bottomBar = {
             BottomNavigationBar(navController = navController, themeViewModel = themeViewModel)
         },
-        containerColor = Color.Transparent // Allow the animated background to be visible
+        containerColor = Color.Transparent
     ) { padding ->
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Pass `isDarkTheme` to the AnimatedBackground
             AnimatedBackgroundHappy(isDarkTheme = isDarkTheme)
 
             Column(
@@ -143,7 +131,7 @@ fun SongRecommendationScreen(
                     .padding(16.dp)
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.fotohappy), // Specific image for the mood
+                    painter = painterResource(id = R.drawable.fotohappy),
                     contentDescription = "Mood Image",
                     modifier = Modifier
                         .fillMaxWidth()
@@ -153,59 +141,79 @@ fun SongRecommendationScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
-                    text = "Even the darkest night will end and the sun will rise.",
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        color = if (isDarkTheme) Color.White else Color.Black
-                    ),
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(80.dp)
+                        .height(140.dp)
                         .padding(8.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = if (isDarkTheme) Color.Gray else Color(0xFFFFEB3B)
                     )
                 ) {
-                    Row(
+                    Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceAround
+                            .padding(8.dp)
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.iconhappy), // Album art
-                            contentDescription = "Album Art",
-                            modifier = Modifier.size(50.dp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            IconButton(onClick = { mediaPlayerHelper.previousSong() }) {
+                                Icon(
+                                    Icons.Rounded.SkipPrevious,
+                                    contentDescription = "Previous",
+                                    tint = if (isDarkTheme) Color.White else Color.Black
+                                )
+                            }
+                            IconButton(onClick = {
+                                mediaPlayerHelper.playOrPauseSong()
+                            }) {
+                                Icon(
+                                    if (mediaPlayerHelper.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                    contentDescription = if (mediaPlayerHelper.isPlaying) "Pause" else "Play",
+                                    tint = if (isDarkTheme) Color.White else Color.Black
+                                )
+                            }
+                            IconButton(onClick = { mediaPlayerHelper.skipSong() }) {
+                                Icon(
+                                    Icons.Rounded.SkipNext,
+                                    contentDescription = "Next",
+                                    tint = if (isDarkTheme) Color.White else Color.Black
+                                )
+                            }
+                        }
+
+                        // Slider for controlling the song position
+                        Slider(
+                            value = mediaPlayerHelper.currentPosition.toFloat(),
+                            onValueChange = { newPosition ->
+                                mediaPlayerHelper.seekTo(newPosition.toInt())
+                            },
+                            valueRange = 0f..mediaPlayerHelper.duration.toFloat(),
+                            colors = SliderDefaults.colors(
+                                thumbColor = if (isDarkTheme) Color.White else Color.Black,
+                                activeTrackColor = if (isDarkTheme) Color.White else Color.Black
+                            ),
+                            modifier = Modifier.fillMaxWidth()
                         )
-                        IconButton(onClick = { previousSong() }) {
-                            Icon(
-                                Icons.Rounded.SkipPrevious,
-                                contentDescription = "Previous",
-                                tint = if (isDarkTheme) Color.LightGray else Color.White
+
+                        // Display current and total song time
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = formatTime(mediaPlayerHelper.currentPosition),
+                                style = MaterialTheme.typography.bodySmall
                             )
-                        }
-                        IconButton(onClick = { playOrPauseSong(context, mediaPlayer, songs[currentSongIndex]) { isPlaying = it } }) {
-                            Icon(
-                                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                contentDescription = if (isPlaying) "Pause" else "Play",
-                                tint = if (isDarkTheme) Color.LightGray else Color.White
-                            )
-                        }
-                        IconButton(onClick = { skipSong() }) {
-                            Icon(
-                                Icons.Rounded.SkipNext,
-                                contentDescription = "Next",
-                                tint = if (isDarkTheme) Color.LightGray else Color.White
+                            Text(
+                                text = formatTime(mediaPlayerHelper.duration),
+                                style = MaterialTheme.typography.bodySmall
                             )
                         }
                     }
@@ -215,9 +223,9 @@ fun SongRecommendationScreen(
 
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     itemsIndexed(songs) { index, song ->
-                        SongListItemHappy(index + 1, song, if (isDarkTheme) Color.Gray else Color(0xFFFFEB3B)) {
-                            currentSongIndex = index
-                            playOrPauseSong(context, mediaPlayer, song) { isPlaying = it }
+                        SongListItem(index + 1, song, if (isDarkTheme) Color.Gray else Color(0xFFFFEB3B)) {
+                            mediaPlayerHelper.currentSongIndex = index
+                            mediaPlayerHelper.playSong(index)
                         }
                     }
                 }
@@ -227,7 +235,7 @@ fun SongRecommendationScreen(
 }
 
 @Composable
-fun SongListItemHappy(index: Int, song: Song, backgroundColor: Color, onPlayClick: () -> Unit) {
+fun SongListItem(index: Int, song: Song, backgroundColor: Color, onPlayClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -262,29 +270,8 @@ fun SongListItemHappy(index: Int, song: Song, backgroundColor: Color, onPlayClic
     }
 }
 
-fun playOrPauseSong(
-    context: Context,
-    mediaPlayer: MediaPlayer,
-    song: Song?,
-    onPlaybackChange: (Boolean) -> Unit
-) {
-    if (song == null) return
-
-    val resId = song.filePath  // Menggunakan filePath sebagai Int (ID resource langsung)
-    if (resId == 0) return
-
-    if (mediaPlayer.isPlaying) {
-        mediaPlayer.pause()
-        onPlaybackChange(false)
-    } else {
-        mediaPlayer.reset()
-        mediaPlayer.setDataSource(context, android.net.Uri.parse("android.resource://${context.packageName}/$resId"))
-        mediaPlayer.prepare()
-        mediaPlayer.start()
-        onPlaybackChange(true)
-    }
-
-    mediaPlayer.setOnCompletionListener {
-        onPlaybackChange(false) // Reset icon to Play when song finishes
-    }
+fun formatTime(milliseconds: Int): String {
+    val minutes = (milliseconds / 1000) / 60
+    val seconds = (milliseconds / 1000) % 60
+    return "%d:%02d".format(minutes, seconds)
 }
