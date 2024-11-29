@@ -6,17 +6,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.animateColor
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,27 +33,12 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import id.dev.moody.ui.SongRecommendationScreen
-import id.dev.moody.ui.SongRecommendationScreenSad
+import id.dev.moody.ui.*
+import id.dev.moody.database.Song
 import id.dev.moody.ui.theme.MoodyTheme
 import id.dev.novlityapp.R
-import id.dev.moody.database.Song
-import id.dev.moody.ui.SongRecommendationScreenRelax
-import id.dev.moody.ui.SongRecommendationScreenSpirit
-import id.dev.moody.ui.SongRecommendationScreenStress
-import id.dev.moody.ui.BottomNavigationBar
-import id.dev.moody.ui.LoginScreen
-import id.dev.moody.ui.NotesScreen
-import id.dev.moody.ui.RegisterScreen
-import id.dev.moody.ui.SettingsScreen
-import id.dev.moody.ui.ThemeViewModel
-import id.dev.moody.ui.StatisticsScreen
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
@@ -99,7 +81,10 @@ class MainActivity : ComponentActivity() {
                 MoodTrackerApp(
                     themeViewModel = themeViewModel,
                     onExploreSongsClick = { selectedMood ->
-                        incrementMoodCount(context, selectedMood) // Menyimpan mood yang dipilih ke statistik
+                        incrementMoodCount(
+                            context,
+                            selectedMood
+                        ) // Menyimpan mood yang dipilih ke statistik
                         when (selectedMood) {
                             "Bahagia" -> navController.navigate("songRecommendationBahagia")
                             "Sedih" -> navController.navigate("songRecommendationSad")
@@ -215,31 +200,36 @@ class MainActivity : ComponentActivity() {
                 Song("Joyful Melody", "Artist B", "Bahagia", R.raw.teeth, 240),
                 Song("Uplifting Tune", "Artist C", "Bahagia", R.raw.never, 200)
             )
+
             "Sedih" -> listOf(
                 Song("Sad Song", "Artist D", "Sedih", R.raw.goodbye, 210),
                 Song("Lonely Melody", "Artist E", "Sedih", R.raw.atlantis, 230),
                 Song("Melancholy Tune", "Artist F", "Sedih", R.raw.glimpse, 250)
             )
+
             "Semangat" -> listOf(
                 Song("Energy Booster", "Artist G", "Semangat", R.raw.best, 300),
                 Song("High Spirits", "Artist H", "Semangat", R.raw.best, 280),
                 Song("Powerful Beat", "Artist I", "Semangat", R.raw.best, 260)
             )
+
             "Stress" -> listOf(
                 Song("Calm Waves", "Artist J", "Stress", R.raw.best, 240),
                 Song("Relaxing Breeze", "Artist K", "Stress", R.raw.best, 260),
                 Song("Mindful Moments", "Artist L", "Stress", R.raw.best, 220)
             )
+
             "Santai" -> listOf(
                 Song("Easy Going", "Artist M", "Santai", R.raw.best, 240),
                 Song("Tranquil Tune", "Artist N", "Santai", R.raw.best, 230),
                 Song("Peaceful Melody", "Artist O", "Santai", R.raw.best, 250)
             )
+
             else -> emptyList()
         }
     }
 
-@Composable
+    @Composable
     fun AnimatedBackground(modifier: Modifier = Modifier, isDarkTheme: Boolean) {
         // Create an infinite transition for the animation
         val infiniteTransition = rememberInfiniteTransition()
@@ -380,25 +370,6 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                Button(
-                    onClick = {
-                        if (notes.isNotBlank()) {
-                            onSaveNote.invoke(notes)
-                            notes = "" // Reset input setelah menyimpan catatan
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isDarkTheme) Color.Gray else Color(
-                            0xFF000000
-                        )
-                    )
-                ) {
-                    Text("Simpan Catatan", color = if (isDarkTheme) Color.Black else Color.White)
-                }
-
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Card(
@@ -469,24 +440,27 @@ class MainActivity : ComponentActivity() {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
-                    onClick = { onExploreSongsClick(selectedMood) },
+                    onClick = {
+                        if (notes.isNotBlank()) {
+                            // Simpan catatan dan eksplorasi lagu
+                            onSaveNote(notes) // Menyimpan catatan
+                            onExploreSongsClick(selectedMood) // Mengeksplorasi lagu berdasarkan mood
+                            notes = "" // Reset input setelah aksi
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(8.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isDarkTheme) Color.Gray else Color(
-                            0xFF000000
-                        )
+                        containerColor = if (isDarkTheme) Color.Gray else Color(0xFF000000)
                     )
                 ) {
-                    Text("Eksplor Lagu", color = if (isDarkTheme) Color.Black else Color.White)
+                    Text(
+                        "Simpan dan Eksplor Lagu",
+                        color = if (isDarkTheme) Color.Black else Color.White
+                    )
                 }
             }
         }
     }
 }
-
-
-
-
-
