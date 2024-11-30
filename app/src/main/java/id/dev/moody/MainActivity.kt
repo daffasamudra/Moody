@@ -6,7 +6,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.animateColor
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -39,6 +44,8 @@ import id.dev.moody.ui.theme.MoodyTheme
 import id.dev.novlityapp.R
 import java.text.SimpleDateFormat
 import java.util.*
+import android.widget.Toast
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
@@ -81,10 +88,7 @@ class MainActivity : ComponentActivity() {
                 MoodTrackerApp(
                     themeViewModel = themeViewModel,
                     onExploreSongsClick = { selectedMood ->
-                        incrementMoodCount(
-                            context,
-                            selectedMood
-                        ) // Menyimpan mood yang dipilih ke statistik
+                        incrementMoodCount(context, selectedMood)
                         when (selectedMood) {
                             "Bahagia" -> navController.navigate("songRecommendationBahagia")
                             "Sedih" -> navController.navigate("songRecommendationSad")
@@ -93,12 +97,8 @@ class MainActivity : ComponentActivity() {
                             "Stress" -> navController.navigate("songRecommendationStress")
                         }
                     },
-                    onSaveNote = { note ->
-                        val currentTime = SimpleDateFormat(
-                            "dd/MM/yyyy HH:mm:ss",
-                            Locale.getDefault()
-                        ).format(Date())
-                        notesList.add(note to currentTime)
+                    onSaveNote = { note, selectedMood ->
+                        notesList.add(note to selectedMood) // Menambahkan catatan dan mood
                     },
                     onViewNotesClick = { navController.navigate("notes") }
                 )
@@ -183,7 +183,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // Fungsi untuk menyimpan statistik mood ke SharedPreferences
     private fun incrementMoodCount(context: Context, mood: String) {
         val sharedPreferences = context.getSharedPreferences("mood_data", Context.MODE_PRIVATE)
         val currentCount = sharedPreferences.getInt(mood, 0)
@@ -192,7 +191,6 @@ class MainActivity : ComponentActivity() {
             .apply()
     }
 
-    // Fungsi untuk mendapatkan lagu berdasarkan mood
     private fun getSongsForMood(mood: String): List<Song> {
         return when (mood) {
             "Bahagia" -> listOf(
@@ -230,47 +228,11 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun AnimatedBackground(modifier: Modifier = Modifier, isDarkTheme: Boolean) {
-        // Create an infinite transition for the animation
-        val infiniteTransition = rememberInfiniteTransition()
-
-        // Define animated colors for the gradient based on theme
-        val color1 by infiniteTransition.animateColor(
-            initialValue = if (isDarkTheme) Color(0xFF5E35B1) else Color(0xFF85FFBD), // Dark Gray or Light Yellow
-            targetValue = if (isDarkTheme) Color(0xFF1C1F26) else Color(0xFF7FD8FF), // Darker Gray or Soft Orange
-            animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 3000, easing = LinearEasing),
-                repeatMode = RepeatMode.Reverse
-            )
-        )
-        val color2 by infiniteTransition.animateColor(
-            initialValue = if (isDarkTheme) Color(0xFF0D1117) else Color(0xFF7FD8FF), // Darker Gray or Vibrant Yellow
-            targetValue = if (isDarkTheme) Color(0xFF1C1F26) else Color(0xFFFFC3A0), // Deep Dark Gray or Light Yellow
-            animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 3000, easing = LinearEasing),
-                repeatMode = RepeatMode.Reverse
-            )
-        )
-
-        // Apply the animated gradient as the background
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(color1, color2)
-                    )
-                )
-        )
-    }
-
-
-    @Composable
     fun MoodTrackerApp(
         modifier: Modifier = Modifier,
         themeViewModel: ThemeViewModel,
         onExploreSongsClick: (String) -> Unit,
-        onSaveNote: (String) -> Unit,
+        onSaveNote: (String, String) -> Unit, // Menyimpan catatan beserta mood
         onViewNotesClick: () -> Unit
     ) {
         val isDarkTheme by themeViewModel.isDarkTheme
@@ -284,20 +246,16 @@ class MainActivity : ComponentActivity() {
             "Semangat" to "😆"
         )
 
-        // Ambil nama pengguna dari SharedPreferences
         val context = LocalContext.current
         val sharedPreferences =
             context.getSharedPreferences("login_preferences", Context.MODE_PRIVATE)
         val username = sharedPreferences.getString("username", "Pengguna") ?: "Pengguna"
 
         Box(
-            modifier = modifier
-                .fillMaxSize()
+            modifier = modifier.fillMaxSize()
         ) {
-            // Use the animated background
             AnimatedBackground(isDarkTheme = isDarkTheme)
 
-            // Content of the MoodTrackerApp
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -308,16 +266,15 @@ class MainActivity : ComponentActivity() {
 
                 // MoodifyText Image
                 Image(
-                    painter = painterResource(id = R.drawable.moodifytext), // Use your resource ID here
+                    painter = painterResource(id = R.drawable.moodifytext),
                     contentDescription = "Moodify Text Logo",
                     modifier = Modifier
-                        .height(100.dp) // Adjust height as needed
-                        .align(Alignment.Start) // Align the image to the top-left corner
-                        .padding(start = 9.dp) // Add padding from the edges if needed
+                        .height(100.dp)
+                        .align(Alignment.Start)
+                        .padding(start = 9.dp)
                         .size(115.dp)
                 )
 
-                // Teks ucapan selamat datang
                 Text(
                     text = "Selamat datang, $username!",
                     style = MaterialTheme.typography.headlineMedium.copy(
@@ -343,12 +300,9 @@ class MainActivity : ComponentActivity() {
                         .padding(8.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = if (isDarkTheme) Color.DarkGray else Color.White.copy(
-                            alpha = 0.7f
-                        )
+                        containerColor = if (isDarkTheme) Color.DarkGray else Color.White.copy(alpha = 0.7f)
                     )
                 ) {
-                    @OptIn(ExperimentalMaterial3Api::class)
                     TextField(
                         value = notes,
                         onValueChange = { notes = it },
@@ -378,9 +332,7 @@ class MainActivity : ComponentActivity() {
                         .padding(8.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = if (isDarkTheme) Color.DarkGray else Color.White.copy(
-                            alpha = 0.7f
-                        )
+                        containerColor = if (isDarkTheme) Color.DarkGray else Color.White.copy(alpha = 0.7f)
                     )
                 ) {
                     Column(modifier = Modifier.padding(8.dp)) {
@@ -396,13 +348,10 @@ class MainActivity : ComponentActivity() {
 
                         moods.forEach { (mood, emoji) ->
                             val isSelected = selectedMood == mood
-
-                            // Animasi untuk ukuran emoji
                             val animatedScale = animateFloatAsState(
                                 targetValue = if (isSelected) 1.5f else 1.0f
                             )
 
-                            // Animasi untuk warna teks
                             val animatedColor by animateColorAsState(
                                 targetValue = if (isSelected) Color(0xFFF3B81A) else if (isDarkTheme) Color.White else Color.Black
                             )
@@ -414,7 +363,6 @@ class MainActivity : ComponentActivity() {
                                     .clickable { selectedMood = mood },
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // Emoji dengan animasi ukuran
                                 Text(
                                     text = emoji,
                                     style = MaterialTheme.typography.bodyLarge.copy(fontSize = 24.sp),
@@ -426,7 +374,6 @@ class MainActivity : ComponentActivity() {
                                         )
                                 )
 
-                                // Mood Text dengan animasi warna
                                 Text(
                                     text = mood,
                                     style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp),
@@ -442,10 +389,13 @@ class MainActivity : ComponentActivity() {
                 Button(
                     onClick = {
                         if (notes.isNotBlank()) {
-                            // Simpan catatan dan eksplorasi lagu
-                            onSaveNote(notes) // Menyimpan catatan
+                            // Simpan catatan dan lanjutkan eksplorasi lagu
+                            onSaveNote(notes, selectedMood) // Menyimpan catatan dengan mood
                             onExploreSongsClick(selectedMood) // Mengeksplorasi lagu berdasarkan mood
                             notes = "" // Reset input setelah aksi
+                        } else {
+                            // Tampilkan notifikasi jika catatan kosong
+                            Toast.makeText(context, "Silahkan Tuliskan Perasaan Anda Terlebih Dahulu", Toast.LENGTH_SHORT).show()
                         }
                     },
                     modifier = Modifier
@@ -463,4 +413,39 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
+
+@Composable
+fun AnimatedBackground(modifier: Modifier = Modifier, isDarkTheme: Boolean) {
+    // Create an infinite transition for the animation
+    val infiniteTransition = rememberInfiniteTransition()
+
+    // Define animated colors for the gradient based on theme
+    val color1 by infiniteTransition.animateColor(
+        initialValue = if (isDarkTheme) Color(0xFF5E35B1) else Color(0xFF85FFBD), // Dark Gray or Light Yellow
+        targetValue = if (isDarkTheme) Color(0xFF1C1F26) else Color(0xFF7FD8FF), // Darker Gray or Soft Orange
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+    val color2 by infiniteTransition.animateColor(
+        initialValue = if (isDarkTheme) Color(0xFF0D1117) else Color(0xFF7FD8FF), // Darker Gray or Vibrant Yellow
+        targetValue = if (isDarkTheme) Color(0xFF1C1F26) else Color(0xFFFFC3A0), // Deep Dark Gray or Light Yellow
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
+    // Apply the animated gradient as the background
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(color1, color2)
+                )
+            )
+    )
 }

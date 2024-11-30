@@ -24,15 +24,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import id.dev.novlityapp.R
+import java.text.SimpleDateFormat
+import java.util.*
+
+fun getCurrentDate(): String {
+    val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault())
+    return dateFormat.format(Date())  // Mendapatkan tanggal dan waktu saat ini
+}
+
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun NotesScreen(
     navController: NavController,
     themeViewModel: ThemeViewModel,
-    notesList: List<Pair<String, String>>,
+    notesList: List<Pair<String, String>>, // Catatan dengan mood
     onBack: () -> Unit,
-    onDeleteNote: (Int) -> Unit // Callback untuk menghapus catatan
+    onDeleteNote: (Int) -> Unit
 ) {
     val isDarkTheme by themeViewModel.isDarkTheme
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -52,12 +60,10 @@ fun NotesScreen(
                     titleContentColor = if (isDarkTheme) Color.White else Color.Black
                 )
             )
-
         },
         bottomBar = {
             BottomNavigationBar(navController = navController, themeViewModel = themeViewModel)
         },
-
         containerColor = if (isDarkTheme) Color.Black else Color.White
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
@@ -87,7 +93,7 @@ fun NotesScreen(
                                         showDeleteDialog = true
                                     }
                                 )
-                                .animateContentSize(), // Animasi saat expand/collapse
+                                .animateContentSize(),
                             shape = RoundedCornerShape(12.dp),
                             colors = CardDefaults.cardColors(
                                 containerColor = if (isDarkTheme) Color.DarkGray else Color.White.copy(alpha = 0.9f)
@@ -105,9 +111,19 @@ fun NotesScreen(
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
 
+                                // Tampilkan Mood
+                                Text(
+                                    text = "Mood: ${note.second}",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.Gray
+                                    )
+                                )
+
                                 // Keterangan Waktu
                                 Text(
-                                    text = note.second,
+                                    text = "Tanggal: ${getCurrentDate()}",
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         fontSize = 14.sp,
                                         color = if (isDarkTheme) Color.LightGray else Color.Gray
@@ -137,16 +153,10 @@ fun NotesScreen(
             AlertDialog(
                 onDismissRequest = { showDeleteDialog = false },
                 title = {
-                    Text(
-                        "Hapus Catatan",
-                        color = if (isDarkTheme) Color.White else Color.Black
-                    )
+                    Text("Hapus Catatan", color = if (isDarkTheme) Color.White else Color.Black)
                 },
                 text = {
-                    Text(
-                        "Apakah Anda yakin ingin menghapus catatan ini?",
-                        color = if (isDarkTheme) Color.LightGray else Color.Gray
-                    )
+                    Text("Apakah Anda yakin ingin menghapus catatan ini?", color = if (isDarkTheme) Color.LightGray else Color.Gray)
                 },
                 confirmButton = {
                     TextButton(onClick = {
@@ -166,5 +176,3 @@ fun NotesScreen(
         }
     }
 }
-
-
