@@ -57,6 +57,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation("androidx.compose.material:material-icons-extended:1.5.0")
     implementation("androidx.compose.material:material:1.4.0")
+    implementation("com.google.code.gson:gson:2.8.9")
 
 
 
@@ -71,6 +72,7 @@ dependencies {
     implementation("androidx.compose.ui:ui:1.5.0")
     implementation("androidx.compose.material3:material3:1.1.0")
     implementation("androidx.compose.ui:ui-tooling-preview:1.5.0")
+    implementation(libs.androidx.runtime.livedata)
     debugImplementation("androidx.compose.ui:ui-tooling:1.5.0")
 
     // Room Database

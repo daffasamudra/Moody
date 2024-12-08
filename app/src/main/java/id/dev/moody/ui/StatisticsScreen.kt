@@ -108,7 +108,7 @@ fun StatisticsScreen(
                                     textAlign = android.graphics.Paint.Align.CENTER
                                 }
                                 val textX = xOffset + barWidth / 2
-                                val textY = size.height + 20f
+                                val textY = size.height + 40f // Tambahkan jarak dengan menyesuaikan nilai ini
                                 canvas.nativeCanvas.drawText(mood, textX, textY, paint)
                             }
 
