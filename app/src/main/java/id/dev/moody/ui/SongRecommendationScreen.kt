@@ -30,7 +30,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import id.dev.moody.database.Song
 import id.dev.novlityapp.R
@@ -136,6 +138,19 @@ fun SongRecommendationScreen(
                         .fillMaxWidth()
                         .height(180.dp)
                         .padding(8.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Happiness is simple—a smile with no reason needed.",
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        color = if (isDarkTheme) Color.White else Color.Black,
+                        textAlign = TextAlign.Center
+                    ),
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))

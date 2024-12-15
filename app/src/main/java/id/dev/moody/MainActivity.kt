@@ -194,33 +194,69 @@ class MainActivity : ComponentActivity() {
     private fun getSongsForMood(mood: String): List<Song> {
         return when (mood) {
             "Bahagia" -> listOf(
-                Song("Happy Song", "Artist A", "Bahagia", R.raw.happy_song, 180),
-                Song("Joyful Melody", "Artist B", "Bahagia", R.raw.teeth, 240),
-                Song("Uplifting Tune", "Artist C", "Bahagia", R.raw.never, 200)
+                Song("Shivers", "Ed Sheeran", "Bahagia", R.raw.shivers, 180),
+                Song("Dont Start Now", "Dua Lipa", "Bahagia", R.raw.dontstartnow, 240),
+                Song("Closer", "The Chainsmokers, Halsey", "Bahagia", R.raw.closewr, 200),
+                Song("As It Was", "Harry Styles", "Bahagia", R.raw.asitwas, 200),
+                Song("Good 4u", "Olivia Rodrigo", "Bahagia", R.raw.good4u, 200),
+                Song("Bad Habit", "Steve Lacy", "Bahagia", R.raw.badhabit, 200),
+                Song("About Damn Time", "Lizzo", "Bahagia", R.raw.aboutdamntime, 200),
+                Song("Sunroof", "Nicky Youre, dazy", "Bahagia", R.raw.sunroof, 200),
+                Song("Peasches", "Justin Bieber, feat. Daniel Caesar Giveon", "Bahagia", R.raw.peaches, 200),
+                Song("Levitating", "Dua Lipa", "Bahagia", R.raw.levilating, 200)
             )
 
             "Sedih" -> listOf(
-                Song("Sad Song", "Artist D", "Sedih", R.raw.goodbye, 210),
-                Song("Lonely Melody", "Artist E", "Sedih", R.raw.atlantis, 230),
-                Song("Melancholy Tune", "Artist F", "Sedih", R.raw.glimpse, 250)
+                Song("Better Together", "Jack Johnson", "Sedih", R.raw.bettertogtr, 210),
+                Song("Easy On Me", "Adele", "Sedih", R.raw.easyonme, 230),
+                Song("Banana Pancakes", "Jack Johnson", "Sedih", R.raw.bananapancakes, 250),
+                Song("GoodBye My Lover", "James Blunt", "Sedih", R.raw.goodbyemylover, 250),
+                Song("The Night We Met", "Lord Huron", "Sedih", R.raw.thenightwemet, 250),
+                Song("I Will Always Love You", "Whitney Houston", "Sedih", R.raw.iwillalways, 250),
+                Song("Before U Go", "Lewis Capaldi", "Sedih", R.raw.beforeyougo, 250),
+                Song("Someone Like U", "Adele", "Sedih", R.raw.someonelikeu, 250),
+                Song("When I Was Ur Man", "Bruno Mars", "Sedih", R.raw.wheniwasurman, 250),
+                Song("Happier", "Olivia Rodrigo", "Sedih", R.raw.happier, 250)
             )
 
             "Semangat" -> listOf(
-                Song("Energy Booster", "Artist G", "Semangat", R.raw.best, 300),
-                Song("High Spirits", "Artist H", "Semangat", R.raw.best, 280),
-                Song("Powerful Beat", "Artist I", "Semangat", R.raw.best, 260)
+                Song("Titanium", "David Guetta, Sia", "Semangat", R.raw.titanium, 300),
+                Song("Rise Up", "Andra Day", "Semangat", R.raw.riseup, 280),
+                Song("Uptown Funk", "Mark Ronson", "Semangat", R.raw.uptownfunk, 260),
+                Song("Happy(?)", "Pharrell Williams", "Semangat", R.raw.happy, 260),
+                Song("Shake It Off", "Taylor Swift", "Semangat", R.raw.shakeitoff, 260),
+                Song("Dont Stop Believin", "Journey", "Semangat", R.raw.dontstopbelievin, 260),
+                Song("Fight Song", "Rachel Platten", "Semangat", R.raw.fightsong, 260),
+                Song("Stronger", "Kanye West", "Semangat", R.raw.stronger, 260),
+                Song("Cant Stop The Feeling", "Justin Timberlake", "Semangat", R.raw.cantstopthefeelin, 260),
+                Song("Eye Of The Tiger", "Survivor", "Semangat", R.raw.eyeofthetiger, 260)
             )
 
             "Stress" -> listOf(
-                Song("Calm Waves", "Artist J", "Stress", R.raw.best, 240),
-                Song("Relaxing Breeze", "Artist K", "Stress", R.raw.best, 260),
-                Song("Mindful Moments", "Artist L", "Stress", R.raw.best, 220)
+                Song("Stressed Out", "Tiko", "Stress", R.raw.stressedout, 240),
+                Song("River Flows in U", "Yiruma", "Stress", R.raw.riverflows, 260),
+                Song("Sunset Lover", "Petit Biscuit", "Stress", R.raw.sunsetlover, 220),
+                Song("Goodbye", "Air Supply", "Stress", R.raw.goodbye, 220),
+                Song("Riptide", "Vance Joy", "Stress", R.raw.riptide, 220),
+                Song("The Lazy Song", "Bruno Mars", "Stress", R.raw.thelazysong, 220),
+                Song("Faded", "Alan Walker", "Stress", R.raw.faded, 220),
+                Song("Daylight", "Maroon 5", "Stress", R.raw.daylight, 220),
+                Song("Fix U", "Coldplay", "Stress", R.raw.fixyou, 220),
+                Song("Put It All on Me", "Ed Sheeran feat. Ella Mai", "Stress", R.raw.putitall, 220)
             )
 
             "Santai" -> listOf(
-                Song("Easy Going", "Artist M", "Santai", R.raw.best, 240),
-                Song("Tranquil Tune", "Artist N", "Santai", R.raw.best, 230),
-                Song("Peaceful Melody", "Artist O", "Santai", R.raw.best, 250)
+                Song("Weightless", "Marconi Union", "Santai", R.raw.weightless, 250),
+                Song("Cold Little Heart", "Michael Kiwanuka", "Santai", R.raw.coldlittle, 250),
+                Song("Stay", "Rihanna, Mikky Ekko", "Santai", R.raw.stay, 250),
+                Song("Adore U", "Harry Styles", "Santai", R.raw.adoreu, 250),
+                Song("Breathe Me", "Sia", "Santai", R.raw.breatheme, 250),
+                Song("The Scientist", "Coldplay", "Santai", R.raw.thescientist, 250),
+                Song("Let Her Go", "Passenger", "Santai", R.raw.lethergo, 250),
+                Song("Lost In Japan", "Shawn Mendes", "Santai", R.raw.lostinjapan, 250),
+                Song("Good Days", "SZA", "Santai", R.raw.gooddays, 250),
+                Song("Breezelocks", "alt-J", "Santai", R.raw.breezeblocks, 250)
+
             )
 
             else -> emptyList()
