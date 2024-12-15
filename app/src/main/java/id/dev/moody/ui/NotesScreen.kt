@@ -46,6 +46,18 @@ fun NotesScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var selectedNoteIndex by remember { mutableStateOf(-1) }
 
+    // Logika untuk menentukan warna teks berdasarkan mood
+    fun getMoodColor(mood: String): Color {
+        return when (mood) {
+            "Bahagia" -> Color.Yellow  // Mood Happy = Kuning
+            "Santai" -> Color.Green    // Mood Santai = Hijau
+            "Stress" -> Color.Red     // Mood Stress = Merah
+            "Sedih" -> Color(0xFF003366) // Mood Sedih = Biru Tua
+            "Semangat" -> Color(0xFFFFA500) // Mood Semangat = Orange
+            else -> Color.Gray         // Default jika mood tidak sesuai
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -111,13 +123,13 @@ fun NotesScreen(
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
 
-                                // Tampilkan Mood
+                                // Tampilkan Mood dengan warna dinamis
                                 Text(
                                     text = "Mood: ${note.second}",
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color.Gray
+                                        color = getMoodColor(note.second) // Gunakan fungsi getMoodColor untuk warna
                                     )
                                 )
 
