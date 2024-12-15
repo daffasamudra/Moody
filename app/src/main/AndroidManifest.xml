@@ -32,7 +32,7 @@
             android:theme="@style/Theme.Moody" />
 
         <service
-            android:name="id.dev.moody.ui.MusicService"
+            android:name="id.dev.moody.service.MusicService"
             android:foregroundServiceType="mediaPlayback"
             android:enabled="true"
             android:exported="false" />

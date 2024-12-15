@@ -26,14 +26,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -42,8 +40,6 @@ import id.dev.moody.ui.*
 import id.dev.moody.database.Song
 import id.dev.moody.ui.theme.MoodyTheme
 import id.dev.novlityapp.R
-import java.text.SimpleDateFormat
-import java.util.*
 import android.widget.Toast
 
 

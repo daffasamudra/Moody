@@ -95,6 +95,9 @@ fun SongRecommendationScreenRelax(
     }
 
     DisposableEffect(Unit) {
+        mediaPlayerHelper.currentSongIndex = 0
+        mediaPlayerHelper.playSong(0) // Memutar lagu pertama secara otomatis
+
         onDispose {
             mediaPlayerHelper.release()
         }
